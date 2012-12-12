@@ -91,28 +91,12 @@ package net
 		private function loaderCompleteHandler(e:Event):void
 		{
 			var data:ByteArray = urlLoader.data;
-			if (!currentItem.hasOwnProperty("requireBytes") && !(currentItem.requireBytes == true))
-			{
-				loader.loadBytes(data, currentItem.isCode ? _swfContext : null);
-			}
-			else
-			{
-				this.onItemCompleteCallBack(currentItem,data,loader.contentLoaderInfo.applicationDomain);
-				this.loadNxt();
-			}
+			loader.loadBytes(data,_swfContext);
 		}
 
 		private function onDecoded(e:Event):void
 		{
-			if (e.target is URLLoader)
-			{
-				var data:ByteArray = urlLoader.data;
-				onComplete(currentItem, data, null);
-			}
-			else
-			{
-				onComplete(currentItem, loader.content, loader.contentLoaderInfo.applicationDomain);
-			}
+			onComplete(currentItem, loader.content, loader.contentLoaderInfo.applicationDomain);
 			loadNxt();
 		}
 
