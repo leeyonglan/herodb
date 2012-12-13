@@ -35,7 +35,6 @@ package net
 				urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onIO_Error);
 				urlLoader.addEventListener(ProgressEvent.PROGRESS, progressHandler)
 				urlLoader.addEventListener(Event.COMPLETE, loaderCompleteHandler);
-//				urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
 				urlLoader.dataFormat=URLLoaderDataFormat.BINARY;
 			}
 			else
@@ -91,7 +90,9 @@ package net
 		private function loaderCompleteHandler(e:Event):void
 		{
 			var data:ByteArray = urlLoader.data;
-			loader.loadBytes(data,_swfContext);
+			onComplete(currentItem, data, loader.contentLoaderInfo.applicationDomain);
+			loadNxt();
+			//loader.loadBytes(data,_swfContext);
 		}
 
 		private function onDecoded(e:Event):void
