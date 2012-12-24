@@ -150,13 +150,15 @@ package com.manager
 				case AnimationEvent.COMPLETE:
 					if(e.data.stat == Hero.ATTACK)
 					{
-						this._attackedHero.switchStat(Hero.HURT);
 						if((e.currentTarget as Hero).scaleX == -1)
 						{
 							(e.currentTarget as Hero).scaleX = 1;
 						}
 					}
 					this.clear();
+					break;
+				case Global.HERO_SHOWATTACKED:
+					this._attackedHero.switchStat(Hero.HURT);
 					break;
 			}
 		}
@@ -183,7 +185,7 @@ package com.manager
 			}
 			TweenLite.to(hero,.5,{x:toPos.x,y:toPos.y,onComplete:moveComplete,onCompleteParams:[hero,toCell]});
 		}
-		
+	
 		private function moveComplete(...arg):void
 		{
 			(arg[0] as Hero).switchStat(Hero.STAND);
