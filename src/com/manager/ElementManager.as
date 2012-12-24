@@ -179,7 +179,7 @@ package com.manager
 			
 			if(toCell.__preid != hero.__cell.__preid)
 			{
-				this._elementLayer.addChildAt(hero,toCell.__preid*10);
+				this._elementLayer.addChild(hero);
 			}
 			TweenLite.to(hero,.5,{x:toPos.x,y:toPos.y,onComplete:moveComplete,onCompleteParams:[hero,toCell]});
 		}
@@ -200,7 +200,7 @@ package com.manager
 		{
 			hero.addTo(onCell);
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
-			this._elementLayer.addChildAt(hero,(onCell.__preid)*10);
+			this._elementLayer.addChild(hero);
 			this.heroPool.push(hero);
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,onCell.__id);
 		}
@@ -231,6 +231,7 @@ package com.manager
 				heros[i].showAttackEffect();
 			}
 		}
+		
 		public function removeSelectAttack():void
 		{
 			for(var i:String in heroPool)
