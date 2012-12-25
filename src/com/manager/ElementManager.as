@@ -11,18 +11,19 @@ package com.manager
 	
 	import global.Global;
 	
-	import gs.TweenLite;
-	
 	import item.Cell;
 	
 	import model.DataManager;
 	
+	import starling.animation.Tween;
+	import starling.core.Starling;
 	import starling.events.Event;
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
 	
 	import util.RangUtil;
+
 	public class ElementManager
 	{
 		private static var instance:ElementManager;
@@ -38,6 +39,9 @@ package com.manager
 		private var _attackRangHero:Vector.<Hero>;
 		
 		private var heroPool:Vector.<Hero> = new Vector.<Hero>();
+		
+		private var heroTween:Tween;
+		
 		public function ElementManager()
 		{
 			
@@ -93,6 +97,11 @@ package com.manager
 			if(touch.phase == TouchPhase.ENDED)
 			{
 				this._attackedHero = e.currentTarget as Hero;
+				if(touch.tapCount ==2)
+				{
+					PanelManager.getInstance().open(Global.PANEL_SOLDIERINFO);
+					return;
+				}
 				
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
 					&& !(this._attackedHero.__isMe) && this._attackRangHero!=null 
@@ -183,11 +192,18 @@ package com.manager
 			{
 				this._elementLayer.addChild(hero);
 			}
-			TweenLite.to(hero,.5,{x:toPos.x,y:toPos.y,onComplete:moveComplete,onCompleteParams:[hero,toCell]});
+			
+			heroTween = new Tween(hero,.5);
+			heroTween.animate("x",toPos.x);
+			heroTween.animate("y",toPos.y);
+			heroTween.onComplete = moveComplete;
+			heroTween.onCompleteArgs = [hero,toCell];
+			Starling.juggler.add(heroTween);
 		}
 	
 		private function moveComplete(...arg):void
 		{
+			this.heroTween = null;
 			(arg[0] as Hero).switchStat(Hero.STAND);
 			(arg[0] as Hero).cell = (arg[1] as Cell);
 			if((arg[0] as Hero).scaleX == -1)
