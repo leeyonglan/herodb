@@ -2,8 +2,12 @@ package com.manager
 {
 	import com.gameElements.Hero;
 	import com.gameElements.Item;
+	import com.screens.AbstractScreen;
+	import com.screens.InGame;
 	
 	import flash.system.ApplicationDomain;
+	
+	import global.Global;
 	
 	import item.HeroVo;
 	import item.ItemVo;
@@ -94,7 +98,9 @@ package com.manager
 		}
 		private function onAllComplete():void
 		{
-			
+			var gameScreen:AbstractScreen = SceneManager.getInstance().getScence(Global.SCREEN_GAME);
+			(gameScreen as InGame).update();
+			SceneManager.getInstance().switchScence(Global.SCREEN_GAME);
 		}
 		public function addHero(hero:Hero):void
 		{
@@ -111,6 +117,10 @@ package com.manager
 		public function getToolList():Vector.<Item>
 		{
 			return this.itemDict; 
+		}
+		public function getMapId():String
+		{
+			return this.mapId;
 		}
 		public function clear():void
 		{

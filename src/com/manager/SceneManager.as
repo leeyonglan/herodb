@@ -53,5 +53,16 @@ package com.manager
 				}
 			}
 		}
+		public function getScence(stat:int):AbstractScreen
+		{
+			for(var i:String in this._sceneList)
+			{
+				if((this._sceneList[i] as AbstractScreen).stat == stat)
+				{
+					return this._sceneList[i] as AbstractScreen;
+				}
+			}
+			return null;
+		}
 	}
 }
