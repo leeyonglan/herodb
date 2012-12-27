@@ -90,9 +90,15 @@ package net
 		private function loaderCompleteHandler(e:Event):void
 		{
 			var data:ByteArray = urlLoader.data;
-			onComplete(currentItem, data, loader.contentLoaderInfo.applicationDomain);
-			loadNxt();
-			//loader.loadBytes(data,_swfContext);
+			if (currentItem.hasOwnProperty("requireBytes") && !(currentItem.requireBytes == true))
+			{
+				this.onItemCompleteCallBack(currentItem,data,loader.contentLoaderInfo.applicationDomain);
+				this.loadNxt();
+			}
+			else
+			{
+				loader.loadBytes(data, currentItem.isCode ? _swfContext : null);
+			}
 		}
 
 		private function onDecoded(e:Event):void
