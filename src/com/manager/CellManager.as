@@ -4,10 +4,13 @@ package com.manager
 	
 	import event.HeroEventDispatcher;
 	
+	import flash.geom.Point;
+	
 	import global.Global;
 	
 	import item.Cell;
 	
+	import starling.display.DisplayObject;
 	import starling.events.Event;
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
@@ -78,6 +81,14 @@ package com.manager
 			}
 		}
 		
+		public static function getHeroPosOncell(display:DisplayObject,cell:Cell):Point
+		{
+			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2 -5));
+		}
+		public static function getPartPosOncell(display:DisplayObject,cell:Cell):Point
+		{
+			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2));
+		}
 		public function hideRang():void
 		{
 			for(var i:String in this._cellList)

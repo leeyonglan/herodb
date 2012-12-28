@@ -190,7 +190,7 @@ package com.manager
 			
 			CellManager.getInstance().hideRang();
 			
-			var toPos:Point = Hero.getHeroPosOncell(hero,toCell);
+			var toPos:Point = CellManager.getHeroPosOncell(hero,toCell);
 			
 			if(toCell.__preid != hero.__cell.__preid)
 			{
