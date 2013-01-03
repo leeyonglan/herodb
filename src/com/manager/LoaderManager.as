@@ -6,7 +6,7 @@ package com.manager
 	{
 		private static var instance:LoaderManager;
 		private static var quequeLoader:QueueLoader;
-		private static var resourceRoot:String = "res";
+		
 		public function LoaderManager()
 		{
 		}

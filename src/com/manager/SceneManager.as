@@ -49,7 +49,6 @@ package com.manager
 				else
 				{
 					(this._sceneList[i] as AbstractScreen).visible = false;
-					
 				}
 			}
 		}

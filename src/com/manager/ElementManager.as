@@ -2,12 +2,17 @@ package com.manager
 {
 	import com.gameElements.ElementLayer;
 	import com.gameElements.Hero;
+	import com.gameElements.Item;
+	
+	import component.HeadBox;
 	
 	import dragonBones.events.AnimationEvent;
 	
 	import event.HeroEventDispatcher;
 	
+	import flash.display.DisplayObject;
 	import flash.geom.Point;
+	import flash.utils.Dictionary;
 	
 	import global.Global;
 	
@@ -28,19 +33,25 @@ package com.manager
 	{
 		private static var instance:ElementManager;
 		private var _elementLayer:ElementLayer;
+		private var _spaceStartX:uint = 200;
 		
 		/** 当前选中的hero **/
 		private var _selectedHero:Hero;
+		/** 当前选中的在仓位的hero**/
+		private var _selectedSpaceHero:Hero
 		/** 当前选中的hero 准备受攻击的hero **/
 		private var _attackedHero:Hero;
 		/** 当前选中的hero 的移动范围 cell id **/
 		private var _rangIds:Vector.<int>;
 		/** 当前选中的hero 的攻击范围中的hero **/
 		private var _attackRangHero:Vector.<Hero>;
-		
+		/** 已经在场上的hero **/
 		private var heroPool:Vector.<Hero> = new Vector.<Hero>();
 		
+		private var spaceDict:Dictionary = new Dictionary;
+		
 		private var heroTween:Tween;
+		private var heroTweenUp:Tween;
 		
 		public function ElementManager()
 		{
@@ -66,14 +77,19 @@ package com.manager
 		public function init(elementLayer:ElementLayer):void
 		{
 			this._elementLayer = elementLayer;
+			
+			for(var i:int=0;i<6;i++)
+			{
+				spaceDict[i] = {pos:new Point(this._spaceStartX+i*100,600),content:null};
+			}
 			HeroEventDispatcher.getInstance().addEventListener(Global.CELL_TOUCH,cellTouchHandler);
 		}
 		
 		private function cellTouchHandler(e:Event):void
 		{
+			var touchCell:Cell = e.data as Cell;
 			if(this._selectedHero)
 			{
-				var touchCell:Cell = e.data as Cell;
 				if(this._rangIds.indexOf(touchCell.__id) != -1)
 				{
 					if(this._selectedHero.__selected)
@@ -83,9 +99,34 @@ package com.manager
 					this.moveHero(this._selectedHero,touchCell);
 				}
 			}
+			if(this._selectedSpaceHero)
+			{
+				this.addToStage(this._selectedSpaceHero,touchCell);
+				this._selectedSpaceHero = null;
+			}
 			this.removeSelectAttack();
 		}
 		
+		private function addToStage(h:Hero,cell:Cell):void
+		{
+			if(cell.__isBorn)
+			{
+				h.selected = false;
+				var onPos:Point = CellManager.getHeroPosOncell(h,cell);
+				heroTweenUp = new Tween(h,.01);
+				heroTweenUp.animate("x",onPos.x);
+				heroTweenUp.animate("y",onPos.y);
+				heroTweenUp.onComplete = upComplete;
+				heroTweenUp.onCompleteArgs = [h,cell];
+				Starling.juggler.add(heroTweenUp);
+			}
+		}
+		private function upComplete(...arg):void
+		{
+			this.heroTweenUp = null;
+			(arg[0] as Hero).removeEventListener(TouchEvent.TOUCH,touchAction);
+			this.addHero(arg[0],arg[1]);
+		}
 		/**
 		 *	 
 		 * @param e
@@ -103,7 +144,7 @@ package com.manager
 					var data:Object = {name:this._attackedHero.hname,icon:this._attackedHero.icon,at:this._attackedHero.at,
 						mat:this._attackedHero.mat,def:this._attackedHero.def,mdef:this._attackedHero.mdef,mov:this._attackedHero.mov,
 						rang:this._attackedHero.rang,currenthp:300,hp:this._attackedHero.hp};
-					//PanelManager.getInstance().getSoldierPanel().setData(data);
+					PanelManager.getInstance().getSoldierPanel().setData(data);
 					return;
 				}
 				trace("tapCount:"+touch.tapCount);
@@ -196,7 +237,7 @@ package com.manager
 			{
 				this._elementLayer.addChild(hero);
 			}
-			
+
 			heroTween = new Tween(hero,.5);
 			heroTween.animate("x",toPos.x);
 			heroTween.animate("y",toPos.y);
@@ -220,11 +261,68 @@ package com.manager
 		
 		public function addHero(hero:Hero,onCell:Cell):void
 		{
+			hero.switchStat(Hero.BORN);
 			hero.addTo(onCell);
+			hero.status = Global.HERO_STATUS_STAGE;
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
 			this._elementLayer.addChild(hero);
 			this.heroPool.push(hero);
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,onCell.__id);
+		}
+		
+		private function touchAction(e:TouchEvent):void
+		{
+			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.ENDED);
+			trace(touch)
+			if(touch)
+			{
+				_selectedSpaceHero = e.currentTarget as Hero;
+				_selectedSpaceHero.selected = true;
+			}
+		}
+		
+		/**
+		 *  
+		 * @param items
+		 * 
+		 */
+		public function addHeroToSpace(items:Vector.<Hero>):void
+		{
+			for(var i:int=0;i<3;i++)
+			{
+				if(spaceDict[i].content == null)
+				{
+					var h:Hero = items.pop();	
+					h.addEventListener(TouchEvent.TOUCH,touchAction);
+					h.status = Global.HERO_STATUS_SPACE;
+					h.isMe = true;
+					h.direct = "R";
+//					h.scaleX = 0.9;
+//					h.scaleY = 0.9;
+					h.x = spaceDict[i].pos.x;
+					h.y = spaceDict[i].pos.y;
+					spaceDict[i].content = h;
+					this._elementLayer.addChild(h);
+				}
+			}
+		}
+		/**
+		 * 
+		 * @param items
+		 * 
+		 */
+		public function addItemToSpace(items:Vector.<Item>):void
+		{
+			for(var i:int=3;i<6;i++)
+			{
+				if(spaceDict[i].content == null)
+				{
+					var h:Item = items.pop();	
+					h.x = spaceDict[i].pos.x;
+					h.y = spaceDict[i].pos.y;
+					this._elementLayer.addChild(h);
+				}
+			}
 		}
 		
 		public function get selectedHero():Hero
@@ -265,6 +363,10 @@ package com.manager
 		private function getIndex(id:int):int
 		{
 			return 1;
+		}
+		public function getHerosPool():Vector.<Hero>
+		{
+			return this.heroPool;
 		}
 	}
 }

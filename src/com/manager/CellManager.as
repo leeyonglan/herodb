@@ -61,6 +61,7 @@ package com.manager
 				if((this._cellList[i] as Cell).__id == id)
 				{
 					c = this._cellList[i];
+					break;
 				}
 			}
 			return c;

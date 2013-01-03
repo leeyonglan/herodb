@@ -28,6 +28,8 @@ package com.manager
 		}
 		public function addParts(part:Parts,toCell:Cell):void
 		{
+			part.pivotX = part.width>>1;
+			part.pivotY = part.height>>1;
 			part.x = CellManager.getPartPosOncell(part,toCell).x;
 			part.y = CellManager.getPartPosOncell(part,toCell).y;
 			toCell.part = part

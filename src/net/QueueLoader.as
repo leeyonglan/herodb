@@ -26,6 +26,7 @@ package net
 		private var onAllCompleteCallBack:Function;
 		private var onProgressCallBack:Function;
 		private var onItemFailedCallBack:Function;
+		private static var resourceRoot:String = "res";
 
 		public function startQueue(loadList:Array, onItemComplete:Function=null, onAllComplete:Function=null, onProgress:Function=null,onItemFailed:Function=null):void
 		{
@@ -82,15 +83,14 @@ package net
 				return;
 			}
 			currentItem=loadList.shift();
-			trace(currentItem.url);
-			var request:URLRequest=new URLRequest(currentItem.url);
+			var request:URLRequest=new URLRequest(QueueLoader.resourceRoot+"/"+currentItem.url);
 			urlLoader.load(request);
 		}
 
 		private function loaderCompleteHandler(e:Event):void
 		{
 			var data:ByteArray = urlLoader.data;
-			if (currentItem.hasOwnProperty("requireBytes") && !(currentItem.requireBytes == true))
+			if (currentItem.hasOwnProperty("requireBytes") && (currentItem.requireBytes == true))
 			{
 				this.onItemCompleteCallBack(currentItem,data,loader.contentLoaderInfo.applicationDomain);
 				this.loadNxt();
@@ -153,7 +153,7 @@ package net
 
 		protected function onIO_Error(e:IOErrorEvent):void
 		{
-			trace(currentItem.id);			
+			trace("没有对应资源："+currentItem.url);			
 			if(onItemFailedCallBack == null)
 			{
 			}

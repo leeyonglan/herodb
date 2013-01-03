@@ -2,7 +2,6 @@
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="com.manager.PartsManager"/>
-    <classEntry path="com.gameElements.Parts"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
