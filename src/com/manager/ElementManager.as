@@ -22,6 +22,7 @@ package com.manager
 	
 	import starling.animation.Tween;
 	import starling.core.Starling;
+	import starling.display.Sprite;
 	import starling.events.Event;
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
@@ -125,6 +126,8 @@ package com.manager
 		{
 			this.heroTweenUp = null;
 			(arg[0] as Hero).removeEventListener(TouchEvent.TOUCH,touchAction);
+			var index:int = this.getSpaceIndex(arg[0]);
+			this.spaceDict[index].content = null;
 			this.addHero(arg[0],arg[1]);
 		}
 		/**
@@ -256,7 +259,7 @@ package com.manager
 				(arg[0] as Hero).scaleX = 1;
 			}
 			this.clear();
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,(arg[1] as Cell).__id);
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
 		}
 		
 		public function addHero(hero:Hero,onCell:Cell):void
@@ -267,13 +270,12 @@ package com.manager
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
 			this._elementLayer.addChild(hero);
 			this.heroPool.push(hero);
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,onCell.__id);
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,{cid:onCell.__id});
 		}
 		
 		private function touchAction(e:TouchEvent):void
 		{
 			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.ENDED);
-			trace(touch)
 			if(touch)
 			{
 				_selectedSpaceHero = e.currentTarget as Hero;
@@ -320,9 +322,28 @@ package com.manager
 					var h:Item = items.pop();	
 					h.x = spaceDict[i].pos.x;
 					h.y = spaceDict[i].pos.y;
+					spaceDict[i].content = h;
 					this._elementLayer.addChild(h);
 				}
 			}
+		}
+		
+		public function getSpaceIndex(sp:Sprite):int
+		{
+			var index:int;
+			for(var i:int=0;i<6;i++)
+			{
+				if(spaceDict[i].content == sp)
+				{
+					index = i;
+				}
+			}
+			return index;
+		}
+		
+		public function getSpaceDict():Dictionary
+		{
+			return this.spaceDict;
 		}
 		
 		public function get selectedHero():Hero
