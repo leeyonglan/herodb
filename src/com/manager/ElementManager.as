@@ -4,13 +4,10 @@ package com.manager
 	import com.gameElements.Hero;
 	import com.gameElements.Item;
 	
-	import component.HeadBox;
-	
 	import dragonBones.events.AnimationEvent;
 	
 	import event.HeroEventDispatcher;
 	
-	import flash.display.DisplayObject;
 	import flash.geom.Point;
 	import flash.utils.Dictionary;
 	
@@ -92,19 +89,29 @@ package com.manager
 		 */
 		public function praseAction(data:Object):void
 		{
+			DataManager.save = false;
 			for(var i:String in data)
 			{
 				switch(data[i].action)
 				{
 					case Global.DATA_ACTION_ADD:
-						//var hero:Hero = this.
+						var hero:Hero = this.getHeroInSpaceById(data[i].id);
+						var cell:Cell = CellManager.getInstance().getCellById(data[i].params.cid);
+						this.addHero(hero,cell);
 						break;
 					case Global.DATA_ACTION_MOVE:
+						var hero:Hero = this.getHeroInStageById(data[i].id);
+						var cell:Cell = CellManager.getInstance().getCellById(data[i].params.cid);
+						this.moveHero(hero,cell);
 						break;
 					case Global.DATA_ACTION_ATTACK:
+						var hero:Hero = this.getHeroInStageById(data[i].id);
+						var toHero:Hero = this.getHeroInStageById(data[i].params.id);
+						this.attack(hero,toHero);
 						break;
 				}
 			}
+			DataManager.save = true;
 		}
 		/**
 		 * 
@@ -223,6 +230,7 @@ package com.manager
 			{
 				hero.scaleX = -1;
 			}
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,{hid:toHero.id});
 		}
 		
 		private function actionHandler(e:Event):void

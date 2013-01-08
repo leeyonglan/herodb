@@ -59,11 +59,11 @@ package com.manager
 		
 		public function setGameData(data:Object):void
 		{
-			this.gameId = data.game;
+			this.gameId = data.game_id;
 			this.mapId = data.map_id;
-			this.userName = data.ua;
-			this.tName = data.ub;
-			this.tNation = data.ub_nation;
+			this.userName = data.usera;
+			this.tName = data.userb;
+			this.tNation = data.ub_nation_id;
 			resList.push({id:"map_1",url:"map/1.jpg"});
 			
 			var elements:Array = ToolUtil.splitId(DataManager.getFieldMapById(this.mapId).map_element);
@@ -79,28 +79,28 @@ package com.manager
 				var res:Object = {id:"element_"+elment.id,url:elment.imgid,cellid:idArr[0],oid:elements[i]};
 				resList.push(res);
 			}
-			this.itemModel = data.ua_in_items;
-			for(var i:String in data.ua_in_items)
+			this.itemModel = data.ua_item_out;
+			for(var i:String in data.ua_item_out)
 			{
-				var idArr:Array = ToolUtil.spliteLine(data.ua_in_items[i]);
+				var idArr:Array = ToolUtil.spliteLine(data.ua_item_out[i]);
 				var it:ItemVo =DataManager.getItemToolById(idArr[0]+"_"+idArr[1]);
 				if(ResourceManager.checkToolResource(it.id))
 				{
 					continue;
 				}
-				var res:Object = {id:"tool_"+it.id,url:it.icon,oid:data.ua_in_items[i]};
+				var res:Object = {id:"tool_"+it.id,url:it.icon,oid:data.ua_item_out[i]};
 				resList.push(res);
 			}
-			this.heroModel = data.ua_in_units;
-			for(var i:String in data.ua_in_units)
+			this.heroModel = data.ua_unit_out;
+			for(var i:String in data.ua_unit_out)
 			{
-				var idArr:Array = ToolUtil.spliteLine(data.ua_in_units[i]);
+				var idArr:Array = ToolUtil.spliteLine(data.ua_unit_out[i]);
 				var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
 				if(ResourceManager.checkHeroResource(h.id))
 				{
 					continue;
 				}
-				var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:data.ua_in_units[i]};
+				var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:data.ua_unit_out[i]};
 				resList.push(res);
 				var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
 				resList.push(res1);
@@ -112,6 +112,8 @@ package com.manager
 		{
 			var spaceDict:Dictionary = ElementManager.getInstance().getSpaceDict();
 			var packageList:Array = new Array;
+			packHeroModel = new Dictionary;
+			packItemModel = new Dictionary;
 			for(var i:int=0;i<6;i++)
 			{
 				if(i<3)
@@ -125,7 +127,7 @@ package com.manager
 						{
 							continue;
 						}
-						var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:data.ua_in_units[i]};
+						var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:data.unit_out[i]};
 						packageList.push(res);
 					}
 				}
@@ -140,7 +142,7 @@ package com.manager
 						{
 							continue;
 						}
-						var res:Object = {id:"tool_"+it.id,url:it.icon,oid:data.ua_in_items[i]};
+						var res:Object = {id:"tool_"+it.id,url:it.icon,oid:data.item_out[i]};
 						packageList.push(res);
 					}
 				}
