@@ -254,7 +254,7 @@ package com.manager
 			}
 			this.itemModel = null;
 		}
-		
+
 		public function addHero(hero:Hero):void
 		{
 			heroDict.push(hero);

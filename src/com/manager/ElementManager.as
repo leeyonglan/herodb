@@ -85,7 +85,32 @@ package com.manager
 			}
 			HeroEventDispatcher.getInstance().addEventListener(Global.CELL_TOUCH,cellTouchHandler);
 		}
-		
+		/**
+		 *  
+		 * @param data
+		 * 
+		 */
+		public function praseAction(data:Object):void
+		{
+			for(var i:String in data)
+			{
+				switch(data[i].action)
+				{
+					case Global.DATA_ACTION_ADD:
+						//var hero:Hero = this.
+						break;
+					case Global.DATA_ACTION_MOVE:
+						break;
+					case Global.DATA_ACTION_ATTACK:
+						break;
+				}
+			}
+		}
+		/**
+		 * 
+		 * @param e
+		 * 
+		 */
 		private function cellTouchHandler(e:Event):void
 		{
 			var touchCell:Cell = e.data as Cell;
@@ -327,7 +352,34 @@ package com.manager
 				}
 			}
 		}
+		public function getHeroInSpaceById(id:String):Hero
+		{
+			var hero:Hero;
+			for(var i:int=0;i<3;i++)
+			{
+				if(spaceDict[i].content != null)
+				{
+					if((spaceDict[i].content as Hero).id == id)
+					{
+						hero = spaceDict[i].content as Hero;
+					}
+				}
+			}
+			return hero
+		}
 		
+		public function getHeroInStageById(id:String):Hero
+		{
+			var hero:Hero;
+			for(var i:String in this.heroPool)
+			{
+				if((heroPool[i] as Hero).id == id)
+				{
+					hero = heroPool[i];
+				}
+			}
+			return hero;
+		}
 		public function getSpaceIndex(sp:Sprite):int
 		{
 			var index:int;
