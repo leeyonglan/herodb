@@ -6,6 +6,8 @@ package com.manager
 	import com.screens.AbstractScreen;
 	import com.screens.InGame;
 	
+	import event.HeroEventDispatcher;
+	
 	import flash.system.ApplicationDomain;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
@@ -19,6 +21,8 @@ package com.manager
 	import model.DataManager;
 	import model.ResourceManager;
 	
+	import starling.events.Event;
+	
 	import util.ToolUtil;
 	
 	public class UserManager
@@ -28,6 +32,9 @@ package com.manager
 		
 		private var heroDict:Vector.<Hero> = new Vector.<Hero>;
 		private var itemDict:Vector.<Item> = new Vector.<Item>;
+		private var ubHeroDict:Vector.<Hero> = new Vector.<Hero>;
+		private var ubItemDict:Vector.<Item> = new Vector.<Item>;
+		
 		private var partDict:Dictionary = new Dictionary;
 		
 		private var gameId:String;
@@ -40,7 +47,10 @@ package com.manager
 		
 		private var elementModel:Array;
 		private var itemModel:Array;
-		private var heroModel:Array;		
+		private var heroModel:Array;
+		private var ubItemModle:Array;
+		private var ubHeroModle:Array;
+		
 		private var packItemModel:Dictionary;
 		private var packHeroModel:Dictionary;
 		
@@ -80,6 +90,12 @@ package com.manager
 				resList.push(res);
 			}
 			this.itemModel = data.ua_item_out;
+			if(data.hasOwnProperty("ubItemId"))
+			{
+				ubItemModle = data.ubItemId;
+				data.ua_item_out = data.ua_item_out.concat(data.ubItemId);
+				data.ua_item_out = ToolUtil.unique(data.ua_item_out);
+			}
 			for(var i:String in data.ua_item_out)
 			{
 				var idArr:Array = ToolUtil.spliteLine(data.ua_item_out[i]);
@@ -92,6 +108,12 @@ package com.manager
 				resList.push(res);
 			}
 			this.heroModel = data.ua_unit_out;
+			if(data.hasOwnProperty("ubHeroId"))
+			{
+				ubHeroModle = ToolUtil.unique(data.ubHeroId);
+				data.ua_unit_out = data.ua_unit_out.concat(data.ubHeroId);
+				data.ua_unit_out = ToolUtil.unique(data.ua_unit_out);
+			}
 			for(var i:String in data.ua_unit_out)
 			{
 				var idArr:Array = ToolUtil.spliteLine(data.ua_unit_out[i]);
@@ -190,13 +212,20 @@ package com.manager
 		
 		private function onAllComplete():void
 		{
+			//init element
 			initObject();
+			
+			// init map
 			var gameScreen:AbstractScreen = SceneManager.getInstance().getScence(Global.SCREEN_GAME);
 			(gameScreen as InGame).update();
+
 			//save fielddatabefor
-			DataManager.setFieldDataBefor(DataManager.getFieldData());
-			
+			DataManager.setFieldDataBefor(DataManager.getFieldData());			
 			SceneManager.getInstance().switchScence(Global.SCREEN_GAME);
+			
+			var evt:Event = new Event(Global.SOURCE_INIT_COMPELET,false);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
+			
 			while(this.resList.length>0)
 			{
 				this.resList.pop();
@@ -243,6 +272,7 @@ package com.manager
 				var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
 				h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
 				h.hid = heroModel[i];
+				h.isMe = true;
 				this.addHero(h);
 			}
 			this.heroModel = null;
@@ -255,6 +285,31 @@ package com.manager
 				this.addTool(ite);
 			}
 			this.itemModel = null;
+			if(ubItemModle)
+			{
+				for(var i:String in this.ubItemModle)
+				{
+					var idArr:Array = ToolUtil.spliteLine(ubItemModle[i]);
+					var ite:Item = new Item(DataManager.getItemToolById(idArr[0]+"_"+idArr[1]).data);
+					ite.updateView();
+					ite.eid = ubItemModle[i];
+					ubItemDict.push(ite);
+				}
+				this.ubItemModle = null;
+			}
+			if(ubHeroModle)
+			{
+				for(var i:String in this.ubHeroModle)
+				{
+					var idArr:Array = ToolUtil.spliteLine(ubHeroModle[i]);
+					var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+					h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
+					h.hid = ubHeroModle[i];
+					h.isMe = false;
+					ubHeroDict.push(h);
+				}
+				this.ubHeroModle = null;
+			}
 		}
 
 		public function addHero(hero:Hero):void
@@ -264,6 +319,38 @@ package com.manager
 		public function getHeroList():Vector.<Hero>
 		{
 			return this.heroDict;	
+		}
+		public function getUbHeroList():Vector.<Hero>
+		{
+			return this.ubHeroDict;
+		}
+		public function getUbItemList():Vector.<Item>
+		{
+			return this.ubItemDict;
+		}
+		public function getUbHeroById(id:String):Hero
+		{
+			var h:Hero;
+			for(var i:String in this.ubHeroDict)
+			{
+				if(this.ubHeroDict[i].id == id)
+				{
+					h = this.ubHeroDict[i];
+				}
+			}
+			return h;
+		}
+		public function getUbItemById(id:String):Item
+		{
+			var h:Item;
+			for(var i:String in this.ubItemDict)
+			{
+				if(this.ubItemDict[i].id == id)
+				{
+					h = this.ubItemDict[i];
+				}
+			}
+			return h;
 		}
 		public function addTool(it:Item):void
 		{
@@ -299,6 +386,14 @@ package com.manager
 			while(this.itemDict.length>0)
 			{
 				itemDict.pop();
+			}
+			while(this.ubHeroDict.length>0)
+			{
+				ubHeroDict.pop();
+			}
+			while(this.ubItemDict.length>0)
+			{
+				ubItemDict.pop();
 			}
 			while(this.partDict.length>0)
 			{

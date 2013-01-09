@@ -95,18 +95,18 @@ package com.manager
 				switch(data[i].action)
 				{
 					case Global.DATA_ACTION_ADD:
-						var hero:Hero = this.getHeroInSpaceById(data[i].id);
+						var hero:Hero = UserManager.getInstance().getUbHeroById(data[i].id);
 						var cell:Cell = CellManager.getInstance().getCellById(data[i].params.cid);
 						this.addHero(hero,cell);
 						break;
 					case Global.DATA_ACTION_MOVE:
-						var hero:Hero = this.getHeroInStageById(data[i].id);
+						var hero:Hero = this.getHeroInStageById(data[i].id,false);
 						var cell:Cell = CellManager.getInstance().getCellById(data[i].params.cid);
 						this.moveHero(hero,cell);
 						break;
 					case Global.DATA_ACTION_ATTACK:
-						var hero:Hero = this.getHeroInStageById(data[i].id);
-						var toHero:Hero = this.getHeroInStageById(data[i].params.id);
+						var hero:Hero = this.getHeroInStageById(data[i].id,false);
+						var toHero:Hero = this.getHeroInStageById(data[i].params.id,true);
 						this.attack(hero,toHero);
 						break;
 				}
@@ -376,12 +376,12 @@ package com.manager
 			return hero
 		}
 		
-		public function getHeroInStageById(id:String):Hero
+		public function getHeroInStageById(id:String,isMe:Boolean = true):Hero
 		{
 			var hero:Hero;
 			for(var i:String in this.heroPool)
 			{
-				if((heroPool[i] as Hero).id == id)
+				if((heroPool[i] as Hero).id == id && (heroPool[i] as Hero).__isMe == isMe)
 				{
 					hero = heroPool[i];
 				}
