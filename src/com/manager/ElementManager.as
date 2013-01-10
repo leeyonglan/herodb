@@ -82,36 +82,27 @@ package com.manager
 			}
 			HeroEventDispatcher.getInstance().addEventListener(Global.CELL_TOUCH,cellTouchHandler);
 		}
-		/**
-		 *  
-		 * @param data
-		 * 
-		 */
-		public function praseAction(data:Object):void
+
+		public function actionStep(data:Object):void
 		{
-			DataManager.save = false;
-			for(var i:String in data)
+			switch(data.action)
 			{
-				switch(data[i].action)
-				{
-					case Global.DATA_ACTION_ADD:
-						var hero:Hero = UserManager.getInstance().getUbHeroById(data[i].id);
-						var cell:Cell = CellManager.getInstance().getCellById(data[i].params.cid);
-						this.addHero(hero,cell);
-						break;
-					case Global.DATA_ACTION_MOVE:
-						var hero:Hero = this.getHeroInStageById(data[i].id,false);
-						var cell:Cell = CellManager.getInstance().getCellById(data[i].params.cid);
-						this.moveHero(hero,cell);
-						break;
-					case Global.DATA_ACTION_ATTACK:
-						var hero:Hero = this.getHeroInStageById(data[i].id,false);
-						var toHero:Hero = this.getHeroInStageById(data[i].params.id,true);
-						this.attack(hero,toHero);
-						break;
-				}
+				case Global.DATA_ACTION_ADD:
+					var hero:Hero = UserManager.getInstance().getUbHeroById(data.id);
+					var cell:Cell = CellManager.getInstance().getCellById(data.params.cid);
+					this.addHero(hero,cell);
+					break;
+				case Global.DATA_ACTION_MOVE:
+					var hero:Hero = this.getHeroInStageById(data.id,false);
+					var cell:Cell = CellManager.getInstance().getCellById(data.params.cid);
+					this.moveHero(hero,cell);
+					break;
+				case Global.DATA_ACTION_ATTACK:
+					var hero:Hero = this.getHeroInStageById(data.id,false);
+					var toHero:Hero = this.getHeroInStageById(data.params.id,true);
+					this.attack(hero,toHero);
+					break;
 			}
-			DataManager.save = true;
 		}
 		/**
 		 * 
@@ -249,6 +240,8 @@ package com.manager
 					break;
 				case Global.HERO_SHOWATTACKED:
 					this._attackedHero.switchStat(Hero.HURT);
+					var evt:Event = new Event(Global.ACTION_DATA_STEP);
+					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
 			}
 		}
@@ -293,6 +286,8 @@ package com.manager
 			}
 			this.clear();
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
+			var evt:Event = new Event(Global.ACTION_DATA_STEP);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
 		public function addHero(hero:Hero,onCell:Cell):void
@@ -303,6 +298,8 @@ package com.manager
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
 			this._elementLayer.addChild(hero);
 			this.heroPool.push(hero);
+			var evt:Event = new Event(Global.ACTION_DATA_STEP);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,{cid:onCell.__id});
 		}
 		

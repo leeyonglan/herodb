@@ -39,9 +39,10 @@ package com.manager
 		
 		private var gameId:String;
 		private var mapId:String;
-		private var userName:String;
+		
 		private var tName:String;
 		private var tNation:String;
+		private var _userName:String = "jerry";
 		
 		private var resList:Array = new Array;
 		
@@ -50,10 +51,13 @@ package com.manager
 		private var heroModel:Array;
 		private var ubItemModle:Array;
 		private var ubHeroModle:Array;
+		private var itemLoaderList:Array;
+		private var heroLoaderList:Array;
 		
 		private var packItemModel:Dictionary;
 		private var packHeroModel:Dictionary;
 		
+		private var _isMaster:Boolean;
 		public function UserManager()
 		{
 		}
@@ -74,6 +78,19 @@ package com.manager
 			this.userName = data.usera;
 			this.tName = data.userb;
 			this.tNation = data.ub_nation_id;
+			var key:String;
+			if(this.userName == data.usera)
+			{
+				this._isMaster = true;
+				itemLoaderList = data.ua_item_out;
+				heroLoaderList = data.ua_unit_out;
+			}
+			else
+			{
+				itemLoaderList = data.ub_item_out;
+				heroLoaderList = data.ub_unit_out;
+				this._isMaster = false;
+			}
 			resList.push({id:"map_1",url:"map/1.jpg"});
 			
 			var elements:Array = ToolUtil.splitId(DataManager.getFieldMapById(this.mapId).map_element);
@@ -89,40 +106,65 @@ package com.manager
 				var res:Object = {id:"element_"+elment.id,url:elment.imgid,cellid:idArr[0],oid:elements[i]};
 				resList.push(res);
 			}
-			this.itemModel = data.ua_item_out;
+			this.itemModel = itemLoaderList;
 			if(data.hasOwnProperty("ubItemId"))
 			{
 				ubItemModle = data.ubItemId;
-				data.ua_item_out = data.ua_item_out.concat(data.ubItemId);
-				data.ua_item_out = ToolUtil.unique(data.ua_item_out);
+				itemLoaderList= itemLoaderList.concat(data.ubItemId);
+				itemLoaderList = ToolUtil.unique(itemLoaderList);
 			}
-			for(var i:String in data.ua_item_out)
+			for(var i:String in itemLoaderList)
 			{
-				var idArr:Array = ToolUtil.spliteLine(data.ua_item_out[i]);
+				var idArr:Array = ToolUtil.spliteLine(itemLoaderList[i]);
 				var it:ItemVo =DataManager.getItemToolById(idArr[0]+"_"+idArr[1]);
 				if(ResourceManager.checkToolResource(it.id))
 				{
 					continue;
 				}
-				var res:Object = {id:"tool_"+it.id,url:it.icon,oid:data.ua_item_out[i]};
+				var res:Object = {id:"tool_"+it.id,url:it.icon,oid:itemLoaderList[i]};
 				resList.push(res);
 			}
-			this.heroModel = data.ua_unit_out;
-			if(data.hasOwnProperty("ubHeroId"))
+			// load slave
+			if(data.hasOwnProperty("heroId"))
 			{
-				ubHeroModle = ToolUtil.unique(data.ubHeroId);
-				data.ua_unit_out = data.ua_unit_out.concat(data.ubHeroId);
-				data.ua_unit_out = ToolUtil.unique(data.ua_unit_out);
+				ubHeroModle = ToolUtil.unique(data.heroId);
+				for(var i:String in heroLoaderList)
+				{
+					var idArr:Array = ToolUtil.spliteLine(heroLoaderList[i]);
+					var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
+					//如果自己是主场，则对方的要加载客场资源
+					if(this._isMaster)
+					{
+						if(ResourceManager.checkHeroSlaveResource(h.id))
+						{
+							continue;
+						}
+						var res:Object = {id:"hero_"+h.id,url:h.animateslave,requireBytes:true,oid:heroLoaderList[i],isSlave:true};
+					}
+					else
+					{
+						if(ResourceManager.checkHeroResource(h.id))
+						{
+							continue;
+						}
+						var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:heroLoaderList[i],isSlave:false};
+					}
+					resList.push(res);
+					var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
+					resList.push(res1);
+				}
 			}
-			for(var i:String in data.ua_unit_out)
+			
+			this.heroModel = heroLoaderList;
+			for(var i:String in heroLoaderList)
 			{
-				var idArr:Array = ToolUtil.spliteLine(data.ua_unit_out[i]);
+				var idArr:Array = ToolUtil.spliteLine(heroLoaderList[i]);
 				var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
 				if(ResourceManager.checkHeroResource(h.id))
 				{
 					continue;
 				}
-				var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:data.ua_unit_out[i]};
+				var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:heroLoaderList[i]};
 				resList.push(res);
 				var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
 				resList.push(res1);
@@ -371,6 +413,18 @@ package com.manager
 		public function getGameId():String
 		{
 			return this.gameId;
+		}
+		public function set userName(name:String):void
+		{
+			this._userName = name;
+		}
+		public function get userName():String
+		{
+			return this._userName;
+		}
+		public function get isMaster():Boolean
+		{
+			return this._isMaster;
 		}
 		public function clear():void
 		{

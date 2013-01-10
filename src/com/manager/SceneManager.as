@@ -11,6 +11,8 @@ package com.manager
 		private static var instance:SceneManager
 		private var _game:Game; 
 		private var _sceneList:Vector.<Sprite>;
+		private var _currentStat:int = 0;
+		private var _beforeStat:int = 0;
 		public function SceneManager()
 		{
 		}
@@ -44,6 +46,11 @@ package com.manager
 			{
 				if((this._sceneList[i] as AbstractScreen).stat == stat)
 				{
+					if(this._currentStat)
+					{
+						this._beforeStat = this._currentStat;
+					}
+					this._currentStat = stat;
 					(this._sceneList[i] as AbstractScreen).visible = true;
 				}
 				else
@@ -52,6 +59,16 @@ package com.manager
 				}
 			}
 		}
+		
+		public function back():void
+		{
+			if(this._beforeStat)
+			{
+				if(this._currentStat == this._beforeStat)return;
+				this.switchScence(this._beforeStat);
+			}
+		}
+		
 		public function getScence(stat:int):AbstractScreen
 		{
 			for(var i:String in this._sceneList)
