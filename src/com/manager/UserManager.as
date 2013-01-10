@@ -75,10 +75,8 @@ package com.manager
 		{
 			this.gameId = data.game_id;
 			this.mapId = data.map_id;
-			this.userName = data.usera;
 			this.tName = data.userb;
 			this.tNation = data.ub_nation_id;
-			var key:String;
 			if(this.userName == data.usera)
 			{
 				this._isMaster = true;
@@ -124,13 +122,13 @@ package com.manager
 				var res:Object = {id:"tool_"+it.id,url:it.icon,oid:itemLoaderList[i]};
 				resList.push(res);
 			}
-			// load slave
+			// 对方
 			if(data.hasOwnProperty("heroId"))
 			{
 				ubHeroModle = ToolUtil.unique(data.heroId);
-				for(var i:String in heroLoaderList)
+				for(var i:String in ubHeroModle)
 				{
-					var idArr:Array = ToolUtil.spliteLine(heroLoaderList[i]);
+					var idArr:Array = ToolUtil.spliteLine(ubHeroModle[i]);
 					var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
 					//如果自己是主场，则对方的要加载客场资源
 					if(this._isMaster)
@@ -139,7 +137,7 @@ package com.manager
 						{
 							continue;
 						}
-						var res:Object = {id:"hero_"+h.id,url:h.animateslave,requireBytes:true,oid:heroLoaderList[i],isSlave:true};
+						var res:Object = {id:"hero_"+h.id,url:h.animateslave,requireBytes:true,oid:ubHeroModle[i],isSlave:true};
 					}
 					else
 					{
@@ -147,14 +145,14 @@ package com.manager
 						{
 							continue;
 						}
-						var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:heroLoaderList[i],isSlave:false};
+						var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:ubHeroModle[i],isSlave:false};
 					}
 					resList.push(res);
 					var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
 					resList.push(res1);
 				}
 			}
-			
+			//自己
 			this.heroModel = heroLoaderList;
 			for(var i:String in heroLoaderList)
 			{
@@ -164,7 +162,14 @@ package com.manager
 				{
 					continue;
 				}
-				var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:heroLoaderList[i]};
+				if(this._isMaster)
+				{
+					var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:heroLoaderList[i],isSlave:false};
+				}
+				else
+				{
+					var res:Object = {id:"hero_"+h.id,url:h.animateslave,requireBytes:true,oid:heroLoaderList[i],isSlave:true};
+				}
 				resList.push(res);
 				var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
 				resList.push(res1);
@@ -234,7 +239,14 @@ package com.manager
 			{	
 				var idArr:Array = String(it.id).split("_");
 				idArr.shift();
-				ResourceManager.addHeroResource(idArr.join("_"),content);
+				if(it.isSlave)
+				{
+					ResourceManager.addHeroSlaveResource(idArr.join("_"),content);
+				}
+				else
+				{
+					ResourceManager.addHeroResource(idArr.join("_"),content);
+				}
 			}
 			
 			if((it.id).indexOf("heroimg_") ==0)
@@ -311,7 +323,14 @@ package com.manager
 			for(var i:String in this.heroModel)
 			{
 				var idArr:Array = ToolUtil.spliteLine(heroModel[i]);
-				var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+				if(this._isMaster)
+				{
+					var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+				}
+				else
+				{
+					var h:Hero = new Hero(ResourceManager.getHeroSlaveResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+				}
 				h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
 				h.hid = heroModel[i];
 				h.isMe = true;
@@ -344,7 +363,14 @@ package com.manager
 				for(var i:String in this.ubHeroModle)
 				{
 					var idArr:Array = ToolUtil.spliteLine(ubHeroModle[i]);
-					var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+					if(this._isMaster)
+					{
+						var h:Hero = new Hero(ResourceManager.getHeroSlaveResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+					}
+					else
+					{
+						var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+					}
 					h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
 					h.hid = ubHeroModle[i];
 					h.isMe = false;

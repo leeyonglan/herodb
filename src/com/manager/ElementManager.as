@@ -196,7 +196,7 @@ package com.manager
 						(item as Hero).switchStat(Hero.ACTIVATE);
 						(item as Hero).selected = true;
 						//step rang
-						this._rangIds = CellManager.getRangCell((item as Hero).__cell,2);
+						this._rangIds = CellManager.getRangCell((item as Hero).__cell,int((item as Hero).mov));
 						CellManager.getInstance().showRang(this._rangIds);
 						//attack rang
 						var cids:Vector.<Vector.<int>> = RangUtil.closeCombat(this._selectedHero.__cell.__id);
