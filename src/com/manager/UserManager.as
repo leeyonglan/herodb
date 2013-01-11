@@ -42,7 +42,7 @@ package com.manager
 		
 		private var tName:String;
 		private var tNation:String;
-		private var _userName:String = "jerry";
+		private var _userName:String = "tom";
 		
 		private var resList:Array = new Array;
 		
@@ -330,6 +330,8 @@ package com.manager
 				else
 				{
 					var h:Hero = new Hero(ResourceManager.getHeroSlaveResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+					h.direct = "L";
+					h.scaleX = -1;
 				}
 				h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
 				h.hid = heroModel[i];
@@ -366,6 +368,8 @@ package com.manager
 					if(this._isMaster)
 					{
 						var h:Hero = new Hero(ResourceManager.getHeroSlaveResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+						h.direct = "L";
+						h.scaleX = -1;
 					}
 					else
 					{

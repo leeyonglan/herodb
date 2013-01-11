@@ -145,6 +145,7 @@ package com.manager
 				Starling.juggler.add(heroTweenUp);
 			}
 		}
+		
 		private function upComplete(...arg):void
 		{
 			this.heroTweenUp = null;
@@ -217,9 +218,9 @@ package com.manager
 			hero.selected = false;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
 			hero.switchStat(Hero.ATTACK);
-			if((hero.__direct == "R" && hero.__cell.__backid > toHero.__cell.__backid) || (hero.__direct == "L" && hero.__cell.__backid < toHero.__cell.__backid))
+			if(this.needDisDir(hero,toHero.__cell))
 			{
-				hero.scaleX = -1;
+				hero.setDisDir();
 			}
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,{hid:toHero.id});
 		}
@@ -252,9 +253,9 @@ package com.manager
 			{
 				return;
 			}
-			if((hero.__direct == "R" && hero.__cell.__backid > toCell.__backid) || (hero.__direct == "L" && hero.__cell.__backid < toCell.__backid))
+			if(this.needDisDir(hero,toCell))
 			{
-				hero.scaleX = -1;
+				hero.setDisDir();
 			}
 			hero.switchStat(Hero.MOVE);
 			
@@ -274,16 +275,31 @@ package com.manager
 			heroTween.onCompleteArgs = [hero,toCell];
 			Starling.juggler.add(heroTween);
 		}
-	
+		
+		/**
+		 *	是否需要转身 
+		 * @param hero
+		 * @param toCell
+		 * @return 
+		 * 
+		 */
+		private function needDisDir(hero:Hero,toCell):Boolean
+		{
+			if((hero.__direct == "R" && hero.__cell.__backid > toCell.__backid) || (hero.__direct == "L" && hero.__cell.__backid < toCell.__backid))
+			{
+				return true;
+			}
+			return false;
+		}
 		private function moveComplete(...arg):void
 		{
 			this.heroTween = null;
 			(arg[0] as Hero).switchStat(Hero.STAND);
-			(arg[0] as Hero).cell = (arg[1] as Cell);
-			if((arg[0] as Hero).scaleX == -1)
+			if(this.needDisDir(arg[0],arg[1]))
 			{
-				(arg[0] as Hero).scaleX = 1;
+				(arg[0] as Hero).setDisDir();
 			}
+			(arg[0] as Hero).cell = (arg[1] as Cell);
 			this.clear();
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -292,7 +308,7 @@ package com.manager
 		
 		public function addHero(hero:Hero,onCell:Cell):void
 		{
-			hero.switchStat(Hero.BORN);
+			//hero.switchStat(Hero.BORN);
 			hero.addTo(onCell);
 			hero.status = Global.HERO_STATUS_STAGE;
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
@@ -328,9 +344,6 @@ package com.manager
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.status = Global.HERO_STATUS_SPACE;
 					h.isMe = true;
-					h.direct = "R";
-//					h.scaleX = 0.9;
-//					h.scaleY = 0.9;
 					h.x = spaceDict[i].pos.x;
 					h.y = spaceDict[i].pos.y;
 					spaceDict[i].content = h;
