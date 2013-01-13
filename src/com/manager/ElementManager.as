@@ -125,25 +125,24 @@ package com.manager
 			}
 			if(this._selectedSpaceHero)
 			{
-				this.addToStage(this._selectedSpaceHero,touchCell);
+				if(touchCell.__isBorn)
+				{
+					this.addToStage(this._selectedSpaceHero,touchCell);
+				}
 				this._selectedSpaceHero = null;
 			}
 			this.removeSelectAttack();
 		}
-		
-		private function addToStage(h:Hero,cell:Cell):void
+		public function addToStage(h:Hero,cell:Cell):void
 		{
-			if(cell.__isBorn)
-			{
-				h.selected = false;
-				var onPos:Point = CellManager.getHeroPosOncell(h,cell);
-				heroTweenUp = new Tween(h,.01);
-				heroTweenUp.animate("x",onPos.x);
-				heroTweenUp.animate("y",onPos.y);
-				heroTweenUp.onComplete = upComplete;
-				heroTweenUp.onCompleteArgs = [h,cell];
-				Starling.juggler.add(heroTweenUp);
-			}
+			h.selected = false;
+			var onPos:Point = CellManager.getHeroPosOncell(h,cell);
+			heroTweenUp = new Tween(h,.01);
+			heroTweenUp.animate("x",onPos.x);
+			heroTweenUp.animate("y",onPos.y);
+			heroTweenUp.onComplete = upComplete;
+			heroTweenUp.onCompleteArgs = [h,cell];
+			Starling.juggler.add(heroTweenUp);
 		}
 		
 		private function upComplete(...arg):void
@@ -190,9 +189,10 @@ package com.manager
 					var item:Hero = heroPool[i] as Hero;
 					if(item == e.currentTarget)
 					{
-						this._selectedHero = item;
 						//if me
-						if(!this._selectedHero.__isMe) return;
+						if(!(item as Hero).__isMe) return;
+						
+						this._selectedHero = item;
 						
 						(item as Hero).switchStat(Hero.ACTIVATE);
 						(item as Hero).selected = true;
@@ -216,6 +216,7 @@ package com.manager
 		public function attack(hero:Hero,toHero:Hero):void
 		{
 			hero.selected = false;
+			hero.attachment = toHero;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
 			hero.switchStat(Hero.ATTACK);
 			if(this.needDisDir(hero,toHero.__cell))
@@ -232,9 +233,10 @@ package com.manager
 				case AnimationEvent.COMPLETE:
 					if(e.data.stat == Hero.ATTACK)
 					{
-						if((e.currentTarget as Hero).scaleX == -1)
+						var h:Hero = e.currentTarget as Hero;
+						if(this.needDisDir(h,(h.attachment as Hero).__cell))
 						{
-							(e.currentTarget as Hero).scaleX = 1;
+							h.setDisDir();
 						}
 					}
 					this.clear();

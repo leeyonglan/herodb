@@ -14,6 +14,7 @@ package com.manager
 	
 	import global.Global;
 	
+	import item.Cell;
 	import item.HeroVo;
 	import item.ItemVo;
 	import item.PartVo;
@@ -31,6 +32,8 @@ package com.manager
 		public var token:String;
 		
 		private var heroDict:Vector.<Hero> = new Vector.<Hero>;
+		private var heroStageDict:Vector.<Hero> = new Vector.<Hero>;
+		private var heroStageDictB:Vector.<Hero> = new Vector.<Hero>;
 		private var itemDict:Vector.<Item> = new Vector.<Item>;
 		private var ubHeroDict:Vector.<Hero> = new Vector.<Hero>;
 		private var ubItemDict:Vector.<Item> = new Vector.<Item>;
@@ -42,18 +45,21 @@ package com.manager
 		
 		private var tName:String;
 		private var tNation:String;
-		private var _userName:String = "tom";
+		private var _userName:String = "999";
 		
 		private var resList:Array = new Array;
 		
 		private var elementModel:Array;
 		private var itemModel:Array;
 		private var heroModel:Array;
+		private var heroStageModel:Array;
+		private var heroStageModelB:Array;
 		private var ubItemModle:Array;
 		private var ubHeroModle:Array;
 		private var itemLoaderList:Array;
 		private var heroLoaderList:Array;
-		
+		private var heroLoaderListB:Array;
+	
 		private var packItemModel:Dictionary;
 		private var packHeroModel:Dictionary;
 		
@@ -77,20 +83,66 @@ package com.manager
 			this.mapId = data.map_id;
 			this.tName = data.userb;
 			this.tNation = data.ub_nation_id;
+			this.heroLoaderList = new Array;
+			this.heroLoaderListB = new Array;
 			if(this.userName == data.usera)
 			{
 				this._isMaster = true;
-				itemLoaderList = data.ua_item_out;
-				heroLoaderList = data.ua_unit_out;
+				this.itemModel = data.ua_item_out;
+				this.heroModel = data.ua_unit_out;
+				//战场兵的
+				if(data.hasOwnProperty("field_data") && data.field_data.unit_a.length>0)
+				{
+					this.heroStageModel = data.field_data.unit_a;
+					var arrlist = new Array;
+					for(var i:String in data.field_data.unit_a)
+					{
+						arrlist.push(data.field_data.unit_a[i].id);	
+					}
+					heroLoaderList = heroLoaderList.concat(arrlist);
+				}
+				if(data.hasOwnProperty("field_data") && data.field_data.unit_b.length>0)
+				{
+					this.heroStageModelB = data.field_data.unit_b;
+					var arrlist = new Array;
+					for(var i:String in data.field_data.unit_b)
+					{
+						arrlist.push(data.field_data.unit_b[i].id);	
+					}
+					heroLoaderListB = heroLoaderListB.concat(arrlist);					
+				}
 			}
 			else
 			{
-				itemLoaderList = data.ub_item_out;
-				heroLoaderList = data.ub_unit_out;
+				this.itemModel = data.ub_item_out;
+				this.heroModel = data.ub_unit_out;
 				this._isMaster = false;
+				//战场兵的
+				if(data.hasOwnProperty("field_data") && data.field_data.unit_b.length>0)
+				{
+					this.heroStageModel = data.field_data.unit_b;
+					var arrlist = new Array;
+					for(var i:String in data.field_data.unit_b)
+					{
+						arrlist.push(data.field_data.unit_b[i].id);	
+					}
+					heroLoaderList = heroLoaderList.concat(arrlist);
+				}
+				if(data.hasOwnProperty("field_data") && data.field_data.unit_a.length>0)
+				{
+					this.heroStageModelB = data.field_data.unit_a;
+					var arrlist = new Array;
+					for(var i:String in data.field_data.unit_a)
+					{
+						arrlist.push(data.field_data.unit_a[i].id);	
+					}
+					heroLoaderListB = heroLoaderListB.concat(arrlist);				
+				}
 			}
+			heroLoaderList = heroLoaderList.concat(heroModel);
+			/***********************地图资源处理***************************/
 			resList.push({id:"map_1",url:"map/1.jpg"});
-			
+			/************************地形资源加载处理***********************/
 			var elements:Array = ToolUtil.splitId(DataManager.getFieldMapById(this.mapId).map_element);
 			this.elementModel = elements;
 			for(var i:String in elements)
@@ -104,7 +156,8 @@ package com.manager
 				var res:Object = {id:"element_"+elment.id,url:elment.imgid,cellid:idArr[0],oid:elements[i]};
 				resList.push(res);
 			}
-			this.itemModel = itemLoaderList;
+			/********************** 自己与对方的道具资源 处理**********************/
+			itemLoaderList = itemModel;
 			if(data.hasOwnProperty("ubItemId"))
 			{
 				ubItemModle = data.ubItemId;
@@ -122,38 +175,40 @@ package com.manager
 				var res:Object = {id:"tool_"+it.id,url:it.icon,oid:itemLoaderList[i]};
 				resList.push(res);
 			}
-			// 对方
+			/**************************** 对方 资源加载处理 *********************/
 			if(data.hasOwnProperty("heroId"))
 			{
 				ubHeroModle = ToolUtil.unique(data.heroId);
-				for(var i:String in ubHeroModle)
-				{
-					var idArr:Array = ToolUtil.spliteLine(ubHeroModle[i]);
-					var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
-					//如果自己是主场，则对方的要加载客场资源
-					if(this._isMaster)
-					{
-						if(ResourceManager.checkHeroSlaveResource(h.id))
-						{
-							continue;
-						}
-						var res:Object = {id:"hero_"+h.id,url:h.animateslave,requireBytes:true,oid:ubHeroModle[i],isSlave:true};
-					}
-					else
-					{
-						if(ResourceManager.checkHeroResource(h.id))
-						{
-							continue;
-						}
-						var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:ubHeroModle[i],isSlave:false};
-					}
-					resList.push(res);
-					var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
-					resList.push(res1);
-				}
+				heroLoaderListB = heroLoaderListB.concat(ubHeroModle);
 			}
-			//自己
-			this.heroModel = heroLoaderList;
+			heroLoaderListB = ToolUtil.unique(heroLoaderListB);
+			for(var i:String in heroLoaderListB)
+			{
+				var idArr:Array = ToolUtil.spliteLine(heroLoaderListB[i]);
+				var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
+				//如果自己是主场，则对方的要加载客场资源
+				if(this._isMaster)
+				{
+					if(ResourceManager.checkHeroSlaveResource(h.id))
+					{
+						continue;
+					}
+					var res:Object = {id:"hero_"+h.id,url:h.animateslave,requireBytes:true,oid:heroLoaderListB[i],isSlave:true};
+				}
+				else
+				{
+					if(ResourceManager.checkHeroResource(h.id))
+					{
+						continue;
+					}
+					var res:Object = {id:"hero_"+h.id,url:h.animate,requireBytes:true,oid:heroLoaderListB[i],isSlave:false};
+				}
+				resList.push(res);
+				var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
+				resList.push(res1);
+			}
+			/****************************自己资源加载处理 ************************/
+			heroLoaderList = ToolUtil.unique(heroLoaderList);
 			for(var i:String in heroLoaderList)
 			{
 				var idArr:Array = ToolUtil.spliteLine(heroLoaderList[i]);
@@ -273,8 +328,6 @@ package com.manager
 			var gameScreen:AbstractScreen = SceneManager.getInstance().getScence(Global.SCREEN_GAME);
 			(gameScreen as InGame).update();
 
-			//save fielddatabefor
-			DataManager.setFieldDataBefor(DataManager.getFieldData());			
 			SceneManager.getInstance().switchScence(Global.SCREEN_GAME);
 			
 			var evt:Event = new Event(Global.SOURCE_INIT_COMPELET,false);
@@ -326,6 +379,7 @@ package com.manager
 				if(this._isMaster)
 				{
 					var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+					h.direct = "R";
 				}
 				else
 				{
@@ -374,6 +428,7 @@ package com.manager
 					else
 					{
 						var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+						h.direct = "R";
 					}
 					h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
 					h.hid = ubHeroModle[i];
@@ -382,8 +437,66 @@ package com.manager
 				}
 				this.ubHeroModle = null;
 			}
+			if(this.heroStageModel)
+			{
+				for(var i:String in this.heroStageModel)
+				{
+					var idArr:Array = ToolUtil.spliteLine(heroStageModel[i].id);
+					if(this._isMaster)
+					{
+						var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+						h.direct = "R";
+						
+					}
+					else
+					{
+						var h:Hero = new Hero(ResourceManager.getHeroSlaveResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+						h.direct = "L";
+						h.scaleX = -1;
+					}
+					h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
+					h.hid = heroStageModel[i].id;
+					h.isMe = true;
+					this.setProperty(h,heroStageModel[i]);
+					heroStageDict.push(h);
+				}
+				this.heroStageModel = null;
+			}
+			if(this.heroStageModelB)
+			{
+				for(var i:String in this.heroStageModelB)
+				{
+					var idArr:Array = ToolUtil.spliteLine(heroStageModelB[i].id);
+					if(this._isMaster)
+					{
+						var h:Hero = new Hero(ResourceManager.getHeroSlaveResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+						h.direct = "L";
+						h.scaleX = -1;
+					}
+					else
+					{
+						var h:Hero = new Hero(ResourceManager.getHeroResourceById(idArr[0]+"_"+idArr[1]) as ByteArray);
+						h.direct = "R";
+					}
+					h.setdata(DataManager.getHeroById(idArr[0]+"_"+idArr[1]).data);
+					h.hid = heroStageModelB[i].id;
+					h.isMe = true;
+					this.setProperty(h,heroStageModelB[i]);
+					heroStageDictB.push(h);
+				}
+			}
 		}
-
+		private function setProperty(h:Hero,o:Object):void
+		{
+			h.at = o.at;
+			h.def = o.df;
+			h._equip = o.equip;
+			h.mat = o.mat;
+			h.mdef = o.mdf;
+			var cell:Cell = CellManager.getInstance().getCellById(o.pos);
+			h.cell = cell;
+			h.skill = o.skill;
+		}
 		public function addHero(hero:Hero):void
 		{
 			heroDict.push(hero);
@@ -391,6 +504,14 @@ package com.manager
 		public function getHeroList():Vector.<Hero>
 		{
 			return this.heroDict;	
+		}
+		public function getHeroStageList():Vector.<Hero>
+		{
+			return this.heroStageDict;
+		}
+		public function getHeroStageListB():Vector.<Hero>
+		{
+			return this.heroStageDictB;
 		}
 		public function getUbHeroList():Vector.<Hero>
 		{
