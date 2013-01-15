@@ -229,6 +229,20 @@ package com.manager
 				var res1:Object = {id:"heroimg_"+h.id,url:h.icon};
 				resList.push(res1);
 			}
+			
+			/********************兵的效果资源**********************************/
+			var effectList:Array = ToolUtil.unique(heroLoaderList.concat(heroLoaderListB));
+			for(var i:String in effectList)
+			{
+				var idArr:Array = ToolUtil.spliteLine(effectList[i]);
+				var h:HeroVo = DataManager.getHeroById(idArr[0]+"_"+idArr[1]);
+				if(ResourceManager.checkHeroEffectResource(h.id))
+				{
+					continue;
+				}
+				var res:Object = {id:"heroeffect_"+h.id,url:"attack/"+h.id+".png",requireBytes:false,oid:effectList[i],isSlave:false};
+				resList.push(res);
+			}
 			LoaderManager.getInstance().load(resList,onItemComplete,onAllComplete);
 		}
 		
@@ -303,7 +317,12 @@ package com.manager
 					ResourceManager.addHeroResource(idArr.join("_"),content);
 				}
 			}
-			
+			if((it.id).indexOf("heroeffect_") == 0)
+			{
+				var idArr:Array = String(it.id).split("_");
+				idArr.shift();
+				ResourceManager.addHeroEffectResource(idArr.join("_"),content);
+			}
 			if((it.id).indexOf("heroimg_") ==0)
 			{
 				var idArr:Array = String(it.id).split("_");
