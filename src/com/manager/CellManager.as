@@ -90,6 +90,10 @@ package com.manager
 		{
 			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2));
 		}
+		public static function getCellMiddle(cell:Cell):Point
+		{
+			return new Point(cell.x + cell.width>>1,cell.y + cell.height>>1);
+		}
 		public function hideRang():void
 		{
 			for(var i:String in this._cellList)

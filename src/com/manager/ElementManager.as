@@ -19,6 +19,7 @@ package com.manager
 	
 	import starling.animation.Tween;
 	import starling.core.Starling;
+	import starling.display.DisplayObject;
 	import starling.display.Sprite;
 	import starling.events.Event;
 	import starling.events.Touch;
@@ -216,7 +217,7 @@ package com.manager
 		public function attack(hero:Hero,toHero:Hero):void
 		{
 			hero.selected = false;
-			hero.attachment = toHero;
+			hero.toHero = toHero;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
 			hero.switchStat(Hero.ATTACK);
 			if(this.needDisDir(hero,toHero.__cell))
@@ -234,7 +235,7 @@ package com.manager
 					if(e.data.stat == Hero.ATTACK)
 					{
 						var h:Hero = e.currentTarget as Hero;
-						if(this.needDisDir(h,(h.attachment as Hero).__cell))
+						if(this.needDisDir(h,(h.toHero as Hero).__cell))
 						{
 							h.setDisDir();
 						}
@@ -437,6 +438,18 @@ package com.manager
 			return list;
 		}
 		
+		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
+		{
+			var heroPoint:Point = CellManager.getCellMiddle(hero.__cell);
+			display.x = heroPoint.x;
+			display.y = heroPoint.y;
+			var toHeroPoint:Point = CellManager.getCellMiddle(toHero.__cell);
+			var tween:Tween = new Tween(display,0.2);
+			tween.animate("x",toHeroPoint.x);
+			tween.animate("y",toHeroPoint.y);
+			this._elementLayer.addChild(display);
+			Starling.juggler.add(tween);
+		}
 		public function showSelectAttack(heros:Vector.<Hero>):void
 		{
 			for(var i:String in heros)

@@ -19,7 +19,7 @@ package com.manager
     public class SharedObjectManager {
 		public static const  SOUND_MUSIC:String = "SOUND_MUSIC"; // 游戏全局的背景音乐的开关
 		public static const  SOUND_EFFECT:String = "SOUND_EFFECT";//游戏全局的背景音效的开关
-		public static var _instance:SharedObjectManager
+		private static var _instance:SharedObjectManager
 		public var so:SharedObject
 		
         public function SharedObjectManager():void {
