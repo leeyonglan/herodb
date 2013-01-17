@@ -45,6 +45,7 @@ package com.manager
 		private function touchHandler(e:TouchEvent):void
 		{
 			var touch:Touch = e.getTouch(this._cellLayer.stage);
+			if(touch == null) return;
 			if(touch.phase == TouchPhase.ENDED)
 			{
 				var cell:Cell = e.currentTarget as Cell;

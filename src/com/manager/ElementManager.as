@@ -162,6 +162,7 @@ package com.manager
 		private function touchHandler(e:TouchEvent):void
 		{
 			var touch:Touch = e.getTouch(this._elementLayer.stage);
+			if(touch == null) return;
 			if(touch.phase == TouchPhase.ENDED)
 			{
 				this._attackedHero = e.currentTarget as Hero;
@@ -239,6 +240,7 @@ package com.manager
 						{
 							h.setDisDir();
 						}
+						h.switchStat(Hero.STAND);
 					}
 					this.clear();
 					break;
@@ -441,14 +443,26 @@ package com.manager
 		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
 		{
 			var heroPoint:Point = CellManager.getCellMiddle(hero.__cell);
-			display.x = heroPoint.x;
-			display.y = heroPoint.y;
+			display.pivotX = display.width>>1;
+			display.pivotY = display.height>>1;
+			display.scaleX = -1;
+			display.x = hero.x;
+			display.y = hero.y;
 			var toHeroPoint:Point = CellManager.getCellMiddle(toHero.__cell);
-			var tween:Tween = new Tween(display,0.2);
-			tween.animate("x",toHeroPoint.x);
-			tween.animate("y",toHeroPoint.y);
+			var tween:Tween = new Tween(display,.2);
+			tween.animate("x",toHero.x);
+			tween.animate("y",toHero.y);
+			tween.onComplete = attckComplete;
+			tween.onCompleteArgs = [display,hero,toHero];
 			this._elementLayer.addChild(display);
+			trace("!!!!!!");
 			Starling.juggler.add(tween);
+		}
+		private function attckComplete(...arg):void
+		{
+			var dis:DisplayObject = arg[0];
+			dis.visible = false;
+			
 		}
 		public function showSelectAttack(heros:Vector.<Hero>):void
 		{
