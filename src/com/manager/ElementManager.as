@@ -304,7 +304,7 @@ package com.manager
 			{
 				(arg[0] as Hero).setDisDir();
 			}
-			(arg[0] as Hero).cell = (arg[1] as Cell);
+			(arg[0] as Hero).addTo(arg[1] as Cell);
 			this.clear();
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -442,13 +442,15 @@ package com.manager
 		
 		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
 		{
-			var heroPoint:Point = CellManager.getCellMiddle(hero.__cell);
+			var mx:Number = (toHero.x - hero.x);
+			var my:Number = (toHero.y - hero.y);
+			var rs:Number = Math.atan2(my,mx);
 			display.pivotX = display.width>>1;
 			display.pivotY = display.height>>1;
-			display.scaleX = -1;
+			display.rotation = rs;
 			display.x = hero.x;
 			display.y = hero.y;
-			var toHeroPoint:Point = CellManager.getCellMiddle(toHero.__cell);
+			
 			var tween:Tween = new Tween(display,.2);
 			tween.animate("x",toHero.x);
 			tween.animate("y",toHero.y);
@@ -461,8 +463,10 @@ package com.manager
 		private function attckComplete(...arg):void
 		{
 			var dis:DisplayObject = arg[0];
+			var toHero:Hero = arg[2];
+			toHero.switchStat(Hero.HURT);
 			dis.visible = false;
-			
+			this._elementLayer.removeChild(dis,true);
 		}
 		public function showSelectAttack(heros:Vector.<Hero>):void
 		{
