@@ -20,6 +20,7 @@ package com.manager
 	import starling.animation.Tween;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
+	import starling.display.MovieClip;
 	import starling.display.Sprite;
 	import starling.events.Event;
 	import starling.events.Touch;
@@ -304,7 +305,7 @@ package com.manager
 			{
 				(arg[0] as Hero).setDisDir();
 			}
-			(arg[0] as Hero).cell = (arg[1] as Cell);
+			(arg[0] as Hero).addTo(arg[1] as Cell);
 			this.clear();
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -442,27 +443,58 @@ package com.manager
 		
 		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
 		{
-			var heroPoint:Point = CellManager.getCellMiddle(hero.__cell);
+			var mx:Number = toHero.x - hero.x;
+			var my:Number = toHero.y - hero.y;
+			var des:Number = Math.atan2(my,mx);
 			display.pivotX = display.width>>1;
 			display.pivotY = display.height>>1;
-			display.scaleX = -1;
+			display.rotation = des;
 			display.x = hero.x;
 			display.y = hero.y;
-			var toHeroPoint:Point = CellManager.getCellMiddle(toHero.__cell);
 			var tween:Tween = new Tween(display,.2);
 			tween.animate("x",toHero.x);
 			tween.animate("y",toHero.y);
 			tween.onComplete = attckComplete;
 			tween.onCompleteArgs = [display,hero,toHero];
 			this._elementLayer.addChild(display);
-			trace("!!!!!!");
 			Starling.juggler.add(tween);
 		}
 		private function attckComplete(...arg):void
 		{
 			var dis:DisplayObject = arg[0];
+			var hero:Hero = arg[1];
+			var toHero:Hero = arg[2];
+			if(hero._stat == Hero.ATTACK)
+			{
+				var mc:MovieClip = Assets.getHeroEffectByKey(toHero.confid,Global.HERO_COMMON_ATTACKEFFECT);
+				this.showAttackEffect(mc,toHero);
+				toHero.switchStat(Hero.HURT);
+			}
+			if(hero._stat == Hero.FINALATTACK)
+			{
+				var mc:MovieClip = Assets.getHeroEffectByKey(toHero.confid,Global.HERO_FINAL_ATTACKEFFECT);
+				this.showAttackEffect(mc,toHero);
+				toHero.switchStat(Hero.FINALATTACK);
+			}
 			dis.visible = false;
-			
+			this._elementLayer.removeChild(dis,true);
+		}
+		public function showAttackEffect(mc:MovieClip,hero:Hero):void
+		{
+			mc.pivotX = mc.width>>1;
+			mc.pivotY = mc.height>>1;
+			mc.x = hero.x;
+			mc.y = hero.y;
+			mc.fps = 24;
+			mc.addEventListener(Event.COMPLETE,effectComplete);
+			this._elementLayer.addChild(mc);
+			Starling.juggler.add(mc);
+		}
+		private function effectComplete(e:Event):void
+		{
+			var tmc:MovieClip = e.currentTarget as MovieClip
+				tmc.visible = false;
+				this._elementLayer.removeChild(tmc,true);
 		}
 		public function showSelectAttack(heros:Vector.<Hero>):void
 		{
