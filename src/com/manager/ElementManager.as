@@ -17,6 +17,8 @@ package com.manager
 	
 	import model.DataManager;
 	
+	import org.osmf.net.StreamingURLResource;
+	
 	import starling.animation.Tween;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
@@ -95,13 +97,30 @@ package com.manager
 					this.addHero(hero,cell);
 					break;
 				case Global.DATA_ACTION_MOVE:
-					var hero:Hero = this.getHeroInStageById(data.id,false);
+					if(UserManager.getInstance().isMaster && data.master == "1")
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,true);
+					}
+					else
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,false);
+					}
+				
 					var cell:Cell = CellManager.getInstance().getCellById(data.params.cid);
 					this.moveHero(hero,cell);
 					break;
 				case Global.DATA_ACTION_ATTACK:
-					var hero:Hero = this.getHeroInStageById(data.id,false);
-					var toHero:Hero = this.getHeroInStageById(data.params.hid,true);
+					if(UserManager.getInstance().isMaster && data.master == "1")
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,true);
+						var toHero:Hero = this.getHeroInStageById(data.params.hid,false);
+					}
+					else
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,false);
+						var toHero:Hero = this.getHeroInStageById(data.params.hid,true);
+					}
+					
 					this.attack(hero,toHero);
 					break;
 			}
@@ -226,7 +245,8 @@ package com.manager
 			{
 				hero.setDisDir();
 			}
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,{hid:toHero.id});
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,master,{hid:toHero.id});
 		}
 		
 		private function actionHandler(e:Event):void
@@ -307,7 +327,8 @@ package com.manager
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
 			this.cleardata();
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,master,{cid:(arg[1] as Cell).__id});
 			
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
@@ -326,7 +347,8 @@ package com.manager
 				var evt:Event = new Event(Global.ACTION_DATA_STEP);
 				HeroEventDispatcher.getInstance().dispatchEvent(evt);
 			}
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,{cid:onCell.__id});
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
 		
 		private function touchAction(e:TouchEvent):void
@@ -402,7 +424,7 @@ package com.manager
 			var hero:Hero;
 			for(var i:String in this.heroPool)
 			{
-				if((heroPool[i] as Hero).id == id)
+				if((heroPool[i] as Hero).id == id && (heroPool[i] as Hero).__isMe == isMe)
 				{
 					hero = heroPool[i];
 				}
