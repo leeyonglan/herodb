@@ -10,6 +10,8 @@ package com.manager
 	{
 		private static var instance:PartsManager;
 		private var _layer:Sprite;
+		private var _partDict:Vector.<Parts> = new Vector.<Parts>;
+		private var _hasPartCellDict:Vector.<Cell> = new Vector.<Cell>;
 		public function PartsManager()
 		{
 		}
@@ -32,8 +34,23 @@ package com.manager
 			part.pivotY = part.height>>1;
 			part.x = CellManager.getPartPosOncell(part,toCell).x;
 			part.y = CellManager.getPartPosOncell(part,toCell).y;
-			toCell.part = part
+			toCell.part = part;
+			_hasPartCellDict.push(toCell);
+			_partDict.push(part);
 			this._layer.addChild(part);
+		}
+		public function clear():void
+		{
+			while(this._partDict.length)
+			{
+				var p:Parts = this._partDict.pop();
+				p = null;
+			}
+			while(this._hasPartCellDict.length>0)
+			{
+				var c:Cell = this._hasPartCellDict.pop();
+				c.part = null;
+			}
 		}
 	}
 }

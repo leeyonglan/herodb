@@ -66,7 +66,7 @@ package com.manager
 			return instance;
 		}
 		
-		private function clear():void
+		private function cleardata():void
 		{
 			this._selectedHero = null;
 			this._attackedHero = null;
@@ -101,7 +101,7 @@ package com.manager
 					break;
 				case Global.DATA_ACTION_ATTACK:
 					var hero:Hero = this.getHeroInStageById(data.id,false);
-					var toHero:Hero = this.getHeroInStageById(data.params.id,true);
+					var toHero:Hero = this.getHeroInStageById(data.params.hid,true);
 					this.attack(hero,toHero);
 					break;
 			}
@@ -186,7 +186,7 @@ package com.manager
 					return;
 				}
 				
-				this.clear();
+				this.cleardata();
 				for(var i:String in heroPool)
 				{
 					var item:Hero = heroPool[i] as Hero;
@@ -243,7 +243,7 @@ package com.manager
 						}
 						h.switchStat(Hero.STAND);
 					}
-					this.clear();
+					this.cleardata();
 					break;
 				case Global.HERO_SHOWATTACKED:
 					this._attackedHero.switchStat(Hero.HURT);
@@ -306,13 +306,14 @@ package com.manager
 				(arg[0] as Hero).setDisDir();
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
-			this.clear();
+			this.cleardata();
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
+			
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
-		public function addHero(hero:Hero,onCell:Cell):void
+		public function addHero(hero:Hero,onCell:Cell,dispatchEvent:Boolean = true):void
 		{
 			//hero.switchStat(Hero.BORN);
 			hero.addTo(onCell);
@@ -320,8 +321,11 @@ package com.manager
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
 			this._elementLayer.addChild(hero);
 			this.heroPool.push(hero);
-			var evt:Event = new Event(Global.ACTION_DATA_STEP);
-			HeroEventDispatcher.getInstance().dispatchEvent(evt);
+			if(dispatchEvent)
+			{
+				var evt:Event = new Event(Global.ACTION_DATA_STEP);
+				HeroEventDispatcher.getInstance().dispatchEvent(evt);
+			}
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,{cid:onCell.__id});
 		}
 		
@@ -346,7 +350,8 @@ package com.manager
 			{
 				if(spaceDict[i].content == null)
 				{
-					var h:Hero = items.pop();	
+					var h:Hero = items.pop();
+					if(h == null) return;
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.status = Global.HERO_STATUS_SPACE;
 					h.isMe = true;
@@ -397,7 +402,7 @@ package com.manager
 			var hero:Hero;
 			for(var i:String in this.heroPool)
 			{
-				if((heroPool[i] as Hero).id == id && (heroPool[i] as Hero).__isMe == isMe)
+				if((heroPool[i] as Hero).id == id)
 				{
 					hero = heroPool[i];
 				}
@@ -464,15 +469,15 @@ package com.manager
 			var dis:DisplayObject = arg[0];
 			var hero:Hero = arg[1];
 			var toHero:Hero = arg[2];
-			if(hero._stat == Hero.ATTACK)
+			if(hero._stat == Hero.ATTACK && hero.atobjeffect == "1")
 			{
-				var mc:MovieClip = Assets.getHeroEffectByKey(toHero.confid,Global.HERO_COMMON_ATTACKEFFECT);
+				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_COMMON_ATTACKEFFECT);
 				this.showAttackEffect(mc,toHero);
 				toHero.switchStat(Hero.HURT);
 			}
-			if(hero._stat == Hero.FINALATTACK)
+			if(hero._stat == Hero.FINALATTACK && hero.finalobjeffect == "1")
 			{
-				var mc:MovieClip = Assets.getHeroEffectByKey(toHero.confid,Global.HERO_FINAL_ATTACKEFFECT);
+				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_FINAL_ATTACKEFFECT);
 				this.showAttackEffect(mc,toHero);
 				toHero.switchStat(Hero.FINALATTACK);
 			}
@@ -519,6 +524,25 @@ package com.manager
 		public function getHerosPool():Vector.<Hero>
 		{
 			return this.heroPool;
+		}
+		
+		public function clear():void
+		{
+			this.cleardata();
+			while(this.heroPool.length>0)
+			{
+				heroPool.pop().removeFromParent(true);
+			}
+			for(var i:int=0;i<6;i++)
+			{
+				if(spaceDict[i].content != null)
+				{
+					if(spaceDict[i].content.parent)
+					{
+						spaceDict[i].content.removeFromParent(true);
+					}
+				}
+			}
 		}
 	}
 }
