@@ -17,8 +17,6 @@ package com.manager
 	
 	import model.DataManager;
 	
-	import org.osmf.net.StreamingURLResource;
-	
 	import starling.animation.Tween;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
@@ -141,6 +139,7 @@ package com.manager
 					{
 						this._selectedHero.selected = false;
 					}
+					DataManager.setSave(true);
 					this.moveHero(this._selectedHero,touchCell);
 				}
 			}
@@ -148,6 +147,7 @@ package com.manager
 			{
 				if(touchCell.__isBorn)
 				{
+					DataManager.setSave(true);
 					this.addToStage(this._selectedSpaceHero,touchCell);
 				}
 				this._selectedSpaceHero = null;
@@ -200,6 +200,7 @@ package com.manager
 					&& !(this._attackedHero.__isMe) && this._attackRangHero!=null 
 					&& this._attackRangHero.indexOf(this._attackedHero)!=-1)
 				{
+					DataManager.setSave(true);
 					this.attack(this._selectedHero,this._attackedHero);
 					this.removeSelectAttack();
 					return;
@@ -247,6 +248,9 @@ package com.manager
 			}
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,master,{hid:toHero.id});
+			
+			var evt:Event = new Event(Global.ACTION_DATA_STEP);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
 		private function actionHandler(e:Event):void
@@ -266,7 +270,6 @@ package com.manager
 					this.cleardata();
 					break;
 				case Global.HERO_SHOWATTACKED:
-					this._attackedHero.switchStat(Hero.HURT);
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
@@ -551,6 +554,7 @@ package com.manager
 		public function clear():void
 		{
 			this.cleardata();
+			DataManager.save = false;
 			while(this.heroPool.length>0)
 			{
 				heroPool.pop().removeFromParent(true);
