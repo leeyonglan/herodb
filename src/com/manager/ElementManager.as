@@ -547,7 +547,7 @@ package com.manager
 			var dis:DisplayObject = arg[0];
 			var hero:Hero = arg[1];
 			var toHero:Hero = arg[2];
-			if(hero._prestat == Hero.ATTACK && hero.atobjeffect == "1")
+			if((hero._stat == Hero.ATTACK ||hero._prestat == Hero.ATTACK) && hero.atobjeffect == "1")
 			{
 				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_COMMON_ATTACKEFFECT);
 				this.showAttackEffect(mc,toHero);
@@ -560,7 +560,7 @@ package com.manager
 					toHero.switchStat(Hero.ENERGY_HURT);
 				}
 			}
-			if(hero._prestat == Hero.FINALATTACK && hero.finalobjeffect == "1")
+			if((hero._stat == Hero.FINALATTACK || hero._prestat == Hero.FINALATTACK) && hero.finalobjeffect == "1")
 			{
 				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_FINAL_ATTACKEFFECT);
 				this.showAttackEffect(mc,toHero);
