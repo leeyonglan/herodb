@@ -1,6 +1,7 @@
 package com.manager
 {
 	import com.gameElements.CellLayer;
+	import com.gameElements.Hero;
 	
 	import event.HeroEventDispatcher;
 	
@@ -83,9 +84,19 @@ package com.manager
 			}
 		}
 		
-		public static function getHeroPosOncell(display:DisplayObject,cell:Cell):Point
+		public static function getHeroPosOncell(h:Hero,cell:Cell):Point
 		{
-			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2 -5));
+			var x:Number = (cell.x + cell.width - h.width/2);
+			var y:Number = (cell.y + cell.height - h.height/2 -5);
+			if(h.co == 1)
+			{
+				x = x+Number(h.xpos);
+			}
+			if(h.co == -1)
+			{
+				//x = x-Number(h.xpos);
+			}
+			return new Point(x,y);
 		}
 		public static function getPartPosOncell(display:DisplayObject,cell:Cell):Point
 		{
