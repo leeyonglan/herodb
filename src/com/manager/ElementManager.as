@@ -20,6 +20,7 @@ package com.manager
 	import starling.animation.Tween;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
+	import starling.display.MovieClip;
 	import starling.display.Sprite;
 	import starling.events.Event;
 	import starling.events.Touch;
@@ -65,7 +66,7 @@ package com.manager
 			return instance;
 		}
 		
-		private function clear():void
+		private function cleardata():void
 		{
 			this._selectedHero = null;
 			this._attackedHero = null;
@@ -94,13 +95,30 @@ package com.manager
 					this.addHero(hero,cell);
 					break;
 				case Global.DATA_ACTION_MOVE:
-					var hero:Hero = this.getHeroInStageById(data.id,false);
+					if(UserManager.getInstance().isMaster && data.master == "1")
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,true);
+					}
+					else
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,false);
+					}
+				
 					var cell:Cell = CellManager.getInstance().getCellById(data.params.cid);
 					this.moveHero(hero,cell);
 					break;
 				case Global.DATA_ACTION_ATTACK:
-					var hero:Hero = this.getHeroInStageById(data.id,false);
-					var toHero:Hero = this.getHeroInStageById(data.params.id,true);
+					if(UserManager.getInstance().isMaster && data.master == "1")
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,true);
+						var toHero:Hero = this.getHeroInStageById(data.params.hid,false);
+					}
+					else
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,false);
+						var toHero:Hero = this.getHeroInStageById(data.params.hid,true);
+					}
+					
 					this.attack(hero,toHero);
 					break;
 			}
@@ -121,6 +139,7 @@ package com.manager
 					{
 						this._selectedHero.selected = false;
 					}
+					DataManager.setSave(true);
 					this.moveHero(this._selectedHero,touchCell);
 				}
 			}
@@ -128,6 +147,7 @@ package com.manager
 			{
 				if(touchCell.__isBorn)
 				{
+					DataManager.setSave(true);
 					this.addToStage(this._selectedSpaceHero,touchCell);
 				}
 				this._selectedSpaceHero = null;
@@ -180,12 +200,13 @@ package com.manager
 					&& !(this._attackedHero.__isMe) && this._attackRangHero!=null 
 					&& this._attackRangHero.indexOf(this._attackedHero)!=-1)
 				{
+					DataManager.setSave(true);
 					this.attack(this._selectedHero,this._attackedHero);
 					this.removeSelectAttack();
 					return;
 				}
 				
-				this.clear();
+				this.cleardata();
 				for(var i:String in heroPool)
 				{
 					var item:Hero = heroPool[i] as Hero;
@@ -225,7 +246,11 @@ package com.manager
 			{
 				hero.setDisDir();
 			}
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,{hid:toHero.id});
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,master,{hid:toHero.id});
+			
+			var evt:Event = new Event(Global.ACTION_DATA_STEP);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
 		private function actionHandler(e:Event):void
@@ -242,10 +267,9 @@ package com.manager
 						}
 						h.switchStat(Hero.STAND);
 					}
-					this.clear();
+					this.cleardata();
 					break;
 				case Global.HERO_SHOWATTACKED:
-					this._attackedHero.switchStat(Hero.HURT);
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
@@ -305,13 +329,15 @@ package com.manager
 				(arg[0] as Hero).setDisDir();
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
-			this.clear();
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,{cid:(arg[1] as Cell).__id});
+			this.cleardata();
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,master,{cid:(arg[1] as Cell).__id});
+			
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
-		public function addHero(hero:Hero,onCell:Cell):void
+		public function addHero(hero:Hero,onCell:Cell,dispatchEvent:Boolean = true):void
 		{
 			//hero.switchStat(Hero.BORN);
 			hero.addTo(onCell);
@@ -319,9 +345,13 @@ package com.manager
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
 			this._elementLayer.addChild(hero);
 			this.heroPool.push(hero);
-			var evt:Event = new Event(Global.ACTION_DATA_STEP);
-			HeroEventDispatcher.getInstance().dispatchEvent(evt);
-			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,{cid:onCell.__id});
+			if(dispatchEvent)
+			{
+				var evt:Event = new Event(Global.ACTION_DATA_STEP);
+				HeroEventDispatcher.getInstance().dispatchEvent(evt);
+			}
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
 		
 		private function touchAction(e:TouchEvent):void
@@ -345,7 +375,8 @@ package com.manager
 			{
 				if(spaceDict[i].content == null)
 				{
-					var h:Hero = items.pop();	
+					var h:Hero = items.pop();
+					if(h == null) return;
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.status = Global.HERO_STATUS_SPACE;
 					h.isMe = true;
@@ -442,31 +473,58 @@ package com.manager
 		
 		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
 		{
-			var mx:Number = (toHero.x - hero.x);
-			var my:Number = (toHero.y - hero.y);
-			var rs:Number = Math.atan2(my,mx);
+			var mx:Number = toHero.x - hero.x;
+			var my:Number = toHero.y - hero.y;
+			var des:Number = Math.atan2(my,mx);
 			display.pivotX = display.width>>1;
 			display.pivotY = display.height>>1;
-			display.rotation = rs;
+			display.rotation = des;
 			display.x = hero.x;
 			display.y = hero.y;
-			
 			var tween:Tween = new Tween(display,.2);
 			tween.animate("x",toHero.x);
 			tween.animate("y",toHero.y);
 			tween.onComplete = attckComplete;
 			tween.onCompleteArgs = [display,hero,toHero];
 			this._elementLayer.addChild(display);
-			trace("!!!!!!");
 			Starling.juggler.add(tween);
 		}
 		private function attckComplete(...arg):void
 		{
 			var dis:DisplayObject = arg[0];
+			var hero:Hero = arg[1];
 			var toHero:Hero = arg[2];
-			toHero.switchStat(Hero.HURT);
+			if(hero._stat == Hero.ATTACK && hero.atobjeffect == "1")
+			{
+				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_COMMON_ATTACKEFFECT);
+				this.showAttackEffect(mc,toHero);
+				toHero.switchStat(Hero.HURT);
+			}
+			if(hero._stat == Hero.FINALATTACK && hero.finalobjeffect == "1")
+			{
+				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_FINAL_ATTACKEFFECT);
+				this.showAttackEffect(mc,toHero);
+				toHero.switchStat(Hero.FINALATTACK);
+			}
 			dis.visible = false;
 			this._elementLayer.removeChild(dis,true);
+		}
+		public function showAttackEffect(mc:MovieClip,hero:Hero):void
+		{
+			mc.pivotX = mc.width>>1;
+			mc.pivotY = mc.height>>1;
+			mc.x = hero.x;
+			mc.y = hero.y;
+			mc.fps = 24;
+			mc.addEventListener(Event.COMPLETE,effectComplete);
+			this._elementLayer.addChild(mc);
+			Starling.juggler.add(mc);
+		}
+		private function effectComplete(e:Event):void
+		{
+			var tmc:MovieClip = e.currentTarget as MovieClip
+				tmc.visible = false;
+				this._elementLayer.removeChild(tmc,true);
 		}
 		public function showSelectAttack(heros:Vector.<Hero>):void
 		{
@@ -491,6 +549,27 @@ package com.manager
 		public function getHerosPool():Vector.<Hero>
 		{
 			return this.heroPool;
+		}
+		
+		public function clear():void
+		{
+			this.cleardata();
+			DataManager.save = false;
+			while(this.heroPool.length>0)
+			{
+				heroPool.pop().removeFromParent(true);
+			}
+			for(var i:int=0;i<6;i++)
+			{
+				if(spaceDict[i].content != null)
+				{
+					if(spaceDict[i].content.parent)
+					{
+						spaceDict[i].content.removeFromParent(true);
+						spaceDict[i].content = null;
+					}
+				}
+			}
 		}
 	}
 }
