@@ -86,8 +86,8 @@ package com.manager
 		
 		public static function getHeroPosOncell(h:Hero,cell:Cell):Point
 		{
-			var x:Number = (cell.x + cell.width - h.width/2);
-			var y:Number = (cell.y + cell.height - h.height/2 -5);
+			var x:Number = (cell.x + cell.width - h.w/2);
+			var y:Number = (cell.y + cell.height - h.h/2 -5);
 			if(h.co == 1)
 			{
 				x = x+Number(h.xpos);
@@ -98,6 +98,7 @@ package com.manager
 			}
 			return new Point(x,y);
 		}
+		
 		public static function getPartPosOncell(display:DisplayObject,cell:Cell):Point
 		{
 			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2));
