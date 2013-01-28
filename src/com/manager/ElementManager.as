@@ -27,6 +27,7 @@ package com.manager
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
 	
+	import util.PropEffect;
 	import util.RangUtil;
 
 	public class ElementManager
@@ -83,7 +84,7 @@ package com.manager
 			if(_selectedItem)
 			{
 				this._selectedItem.selected = false;
-				this._selectedItem = null;
+//				this._selectedItem = null;
 			}
 			if(this._rangIds)
 			{
@@ -259,8 +260,12 @@ package com.manager
 						{
 							if(this._selectedItem)
 							{
-								
+								PropEffect.useTool(item,this._selectedItem);
+								var index:int = getSpaceIndex(this._selectedItem);
+								spaceDict[index].content = null;
+								this._selectedItem = null;
 								return;
+								
 							}
 							this._selectedHero = item;
 							this._selectedSpaceHero = null;
