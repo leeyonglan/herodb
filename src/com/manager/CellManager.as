@@ -83,7 +83,6 @@ package com.manager
 				}
 			}
 		}
-		
 		public static function getHeroPosOncell(h:Hero,cell:Cell):Point
 		{
 			var x:Number = (cell.x + cell.width - h.w/2);
@@ -107,7 +106,7 @@ package com.manager
 		{
 			return new Point(cell.x + cell.width>>1,cell.y + cell.height>>1);
 		}
-		public function hideRang():void
+		public  function hideRang():void
 		{
 			for(var i:String in this._cellList)
 			{
