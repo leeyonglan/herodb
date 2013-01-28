@@ -39,6 +39,8 @@ package com.manager
 		private var _selectedHero:Hero;
 		/** 当前选中的在仓位的hero**/
 		private var _selectedSpaceHero:Hero
+		/** 当前选中的在仓位的item**/
+		private var _selectedItem:Item;
 		/** 当前选中的hero 准备受攻击的hero **/
 		private var _attackedHero:Hero;
 		/** 当前选中的hero 的移动范围 cell id **/
@@ -68,9 +70,26 @@ package com.manager
 		
 		private function cleardata():void
 		{
-			this._selectedHero = null;
-			this._attackedHero = null;
-			this._rangIds = null;
+			if(this._selectedHero)
+			{
+				this._selectedHero.selected = false;
+				this._selectedHero = null;
+			}
+			if(_attackedHero)
+			{
+				this._attackedHero.selected = false;
+				this._attackedHero = null;
+			}
+			if(_selectedItem)
+			{
+				this._selectedItem.selected = false;
+				this._selectedItem = null;
+			}
+			if(this._rangIds)
+			{
+				CellManager.getInstance().hideRang();
+				this._rangIds = null;
+			}
 			this._attackRangHero = null;
 		}
 		
@@ -232,19 +251,29 @@ package com.manager
 					if(item == e.currentTarget)
 					{
 						//if me
-						if(!(item as Hero).__isMe) return;
-						
-						this._selectedHero = item;
-						this._selectedSpaceHero = null;
-						(item as Hero).switchStat(Hero.ACTIVATE);
-						(item as Hero).selected = true;
-						//step rang
-						this._rangIds = CellManager.getRangCell((item as Hero).__cell,int((item as Hero).mov));
-						CellManager.getInstance().showRang(this._rangIds);
-						//attack rang
-						var cids:Vector.<int> = CellManager.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
-						_attackRangHero = this.getRangHero(cids,false);
-						this.showSelectAttack(_attackRangHero);
+						if(!(item as Hero).__isMe)
+						{
+							return;
+						}
+						else
+						{
+							if(this._selectedItem)
+							{
+								
+								return;
+							}
+							this._selectedHero = item;
+							this._selectedSpaceHero = null;
+							(item as Hero).switchStat(Hero.ACTIVATE);
+							(item as Hero).selected = true;
+							//step rang
+							this._rangIds = CellManager.getRangCell((item as Hero).__cell,int((item as Hero).mov));
+							CellManager.getInstance().showRang(this._rangIds);
+							//attack rang
+							var cids:Vector.<int> = CellManager.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
+							_attackRangHero = this.getRangHero(cids,false);
+							this.showSelectAttack(_attackRangHero);
+						}
 					}
 					else
 					{
@@ -381,6 +410,12 @@ package com.manager
 					_selectedSpaceHero = e.currentTarget as Hero;
 					_selectedSpaceHero.selected = true;
 					this._selectedHero = null;
+					this._selectedItem = null;
+				}
+				if(e.currentTarget is Item)
+				{
+					this._selectedItem = e.currentTarget as Item;
+					this._selectedItem.selected = true;
 				}
 			}
 		}
