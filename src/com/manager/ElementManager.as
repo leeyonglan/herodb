@@ -145,6 +145,7 @@ package com.manager
 		 */
 		private function cellTouchHandler(e:Event):void
 		{
+			if(!DataManager.canOpt())return;
 			var touchCell:Cell = e.data as Cell;
 			if(this._selectedHero)
 			{
@@ -217,6 +218,7 @@ package com.manager
 					&& !(this._attackedHero.__isMe) && this._attackRangHero!=null 
 					&& this._attackRangHero.indexOf(this._attackedHero)!=-1)
 				{
+					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
 					this.attack(this._selectedHero,this._attackedHero);
 					this.removeSelectAttack();
@@ -374,9 +376,12 @@ package com.manager
 			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.ENDED);
 			if(touch)
 			{
-				_selectedSpaceHero = e.currentTarget as Hero;
-				_selectedSpaceHero.selected = true;
-				this._selectedHero = null;
+				if(e.currentTarget is Hero)
+				{
+					_selectedSpaceHero = e.currentTarget as Hero;
+					_selectedSpaceHero.selected = true;
+					this._selectedHero = null;
+				}
 			}
 		}
 		
@@ -385,19 +390,22 @@ package com.manager
 		 * @param items
 		 * 
 		 */
-		public function addHeroToSpace(items:Vector.<Hero>):void
+		public function addHeroToSpace(items:Object):void
 		{
 			for(var i:int=0;i<3;i++)
 			{
 				if(spaceDict[i].content == null)
 				{
-					var h:Hero = items.pop();
+					if(!items.hasOwnProperty(i)) continue;
+					var h:Hero = items[i];
 					if(h == null) return;
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.status = Global.HERO_STATUS_SPACE;
 					h.isMe = true;
 					h.x = spaceDict[i].pos.x;
 					h.y = spaceDict[i].pos.y;
+					trace("h.x is:"+h.x);
+					trace("h.y is:"+h.y);
 					spaceDict[i].content = h;
 					this._elementLayer.addChild(h);
 				}
@@ -408,13 +416,15 @@ package com.manager
 		 * @param items
 		 * 
 		 */
-		public function addItemToSpace(items:Vector.<Item>):void
+		public function addItemToSpace(items:Object):void
 		{
 			for(var i:int=3;i<6;i++)
 			{
 				if(spaceDict[i].content == null)
 				{
-					var h:Item = items.pop();	
+					if(!items.hasOwnProperty(i-3))continue;
+					var h:Item = items[i-3];
+					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.x = spaceDict[i].pos.x;
 					h.y = spaceDict[i].pos.y;
 					spaceDict[i].content = h;
