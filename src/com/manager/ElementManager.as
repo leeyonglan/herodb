@@ -347,7 +347,7 @@ package com.manager
 				hero.setDisDir();
 			}
 			hero.switchStat(Hero.MOVE);
-			
+			EffectManager.getInstance().removeEffect(hero.__cell.__id);
 			heroTween = new Tween(hero,.5);
 			heroTween.animate("x",toPos.x);
 			heroTween.animate("y",toPos.y);
