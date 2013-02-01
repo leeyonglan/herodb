@@ -440,8 +440,6 @@ package com.manager
 					h.isMe = true;
 					h.x = spaceDict[i].pos.x;
 					h.y = spaceDict[i].pos.y;
-					trace("h.x is:"+h.x);
-					trace("h.y is:"+h.y);
 					spaceDict[i].content = h;
 					this._elementLayer.addChild(h);
 				}
