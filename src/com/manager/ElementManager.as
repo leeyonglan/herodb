@@ -227,10 +227,7 @@ package com.manager
 				if(touch.tapCount ==2)
 				{
 					PanelManager.getInstance().open(Global.PANEL_SOLDIERINFO);
-					var data:Object = {name:this._attackedHero.hname,icon:this._attackedHero.icon,at:this._attackedHero.at,
-						mat:this._attackedHero.mat,def:this._attackedHero.def,mdef:this._attackedHero.mdef,mov:this._attackedHero.mov,
-						rang:this._attackedHero.rang,currenthp:300,hp:this._attackedHero.hp};
-					PanelManager.getInstance().getSoldierPanel().setData(data);
+					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
 				trace("tapCount:"+touch.tapCount);
