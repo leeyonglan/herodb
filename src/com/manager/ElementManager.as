@@ -3,6 +3,7 @@ package com.manager
 	import com.gameElements.ElementLayer;
 	import com.gameElements.Hero;
 	import com.gameElements.Item;
+	import com.ui.BottomSprite;
 	
 	import dragonBones.events.AnimationEvent;
 	
@@ -29,6 +30,8 @@ package com.manager
 	
 	import util.PropEffect;
 	import util.RangUtil;
+	import util.SkillAttack;
+	import util.MapElementEffect;
 
 	public class ElementManager
 	{
@@ -156,6 +159,18 @@ package com.manager
 					}
 					this.attack(hero,toHero);
 					break;
+				case Global.DATA_ACTION_USETOOL:
+					if(UserManager.getInstance().isMaster && data.master == "1")
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,true);
+					}
+					else
+					{
+						var hero:Hero = this.getHeroInStageById(data.id,false);
+					}
+					var it:Item = UserManager.getInstance().getUbItemById(data.params.tid);
+					PropEffect.useTool(hero,it);
+					break;
 			}
 		}
 		/**
@@ -178,6 +193,10 @@ package com.manager
 					DataManager.setSave(true);
 					this.moveHero(this._selectedHero,touchCell);
 				}
+				else
+				{
+					this.cleardata();
+				}
 			}
 			if(this._selectedSpaceHero)
 			{
@@ -189,6 +208,8 @@ package com.manager
 				}
 				else
 				{
+					this.cleardata();
+					this.switchSpaceStatus();
 					return;
 				}
 				this._selectedSpaceHero = null;
@@ -263,7 +284,10 @@ package com.manager
 						{
 							if(this._selectedItem)
 							{
+								if(!DataManager.canOpt())return;
 								PropEffect.useTool(item,this._selectedItem);
+								var master:String = UserManager.getInstance().isMaster?"1":"0";
+								DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,(item as Hero).id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id});
 								var index:int = getSpaceIndex(this._selectedItem);
 								spaceDict[index].content = null;
 								this._selectedItem = null;
@@ -290,7 +314,7 @@ package com.manager
 				}
 			}
 		}
-		
+
 		public function attack(hero:Hero,toHero:Hero):void
 		{
 			hero.selected = false;
@@ -301,6 +325,7 @@ package com.manager
 			{
 				hero.setDisDir();
 			}
+			SkillAttack.doAttack(hero,toHero);
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,master,{hid:toHero.id});
 			
@@ -350,7 +375,7 @@ package com.manager
 				hero.setDisDir();
 			}
 			hero.switchStat(Hero.MOVE);
-			EffectManager.getInstance().removeEffect(hero.__cell.__id);
+			MapElementEffect.removeMp(hero);
 			heroTween = new Tween(hero,.5);
 			heroTween.animate("x",toPos.x);
 			heroTween.animate("y",toPos.y);
@@ -412,6 +437,7 @@ package com.manager
 			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.ENDED);
 			if(touch)
 			{
+				switchSpaceStatus();
 				if(e.currentTarget is Hero)
 				{
 					_selectedSpaceHero = e.currentTarget as Hero;
@@ -427,6 +453,24 @@ package com.manager
 			}
 		}
 		
+		private function switchStageStatus():void
+		{
+			for(var i:String in this.heroPool)
+			{
+				this.heroPool[i].selected = false;
+			}
+		}
+		private function switchSpaceStatus():void
+		{
+			switchStageStatus();
+			for(var i:int=0;i<6;i++)
+			{
+				if(spaceDict[i].content != null)
+				{
+					spaceDict[i].content.selected = false;
+				}
+			}
+		}
 		/**
 		 *  
 		 * @param items
@@ -458,16 +502,16 @@ package com.manager
 		 */
 		public function addItemToSpace(items:Object):void
 		{
-			for(var i:int=3;i<6;i++)
+			for(var i:int=0;i<3;i++)
 			{
-				if(spaceDict[i].content == null)
+				if(spaceDict[i+3].content == null)
 				{
-					if(!items.hasOwnProperty(i-3))continue;
-					var h:Item = items[i-3];
+					if(!items.hasOwnProperty(i))continue;
+					var h:Item = items[i];
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
-					h.x = spaceDict[i].pos.x;
-					h.y = spaceDict[i].pos.y;
-					spaceDict[i].content = h;
+					h.x = spaceDict[i+3].pos.x;
+					h.y = spaceDict[i+3].pos.y;
+					spaceDict[i+3].content = h;
 					this._elementLayer.addChild(h);
 				}
 			}
@@ -535,6 +579,7 @@ package com.manager
 			}
 			return list;
 		}
+		
 		/**
 		 * 根据类型获取范围内的对象实例 
 		 * @param ids
@@ -687,19 +732,39 @@ package com.manager
 		
 		public function reset():void
 		{
+			this.cleardata();
+			EffectManager.getInstance().clear();
+			DataManager.getInstance().clear();
+			
 			var heroStageList:Vector.<Hero> = UserManager.getInstance().getHeroStageList();
 			var heroStageListB:Vector.<Hero> = UserManager.getInstance().getHeroStageListB();
+			var heroStageModel:Array = UserManager.getInstance().getHeroStageModel();
+			var heroStageModelB:Array = UserManager.getInstance().getHeroStageModelB();
+			for(var i:String in heroStageList)
+			{
+				UserManager.setProperty(heroStageList[i],heroStageModel[i]);
+				this.addHero(heroStageList[i],heroStageList[i].__cell,false);
+			}
+			
 			for(var i:String in heroStageListB)
 			{
-				heroStageList.push(heroStageListB[i]);
+				UserManager.setProperty(heroStageListB[i],heroStageModelB[i]);
+				this.addHero(heroStageListB[i],heroStageListB[i].__cell,false);
 			}
-			for(var i:String in heroStageList)
-			{				
-				ElementManager.getInstance().addHero(heroStageList[i],heroStageList[i].__cell,false);
+			var spaceHeroList:Vector.<Hero> = UserManager.getInstance().getHeroList();
+			for(var i:String in spaceHeroList)
+			{
+				(spaceHeroList[i] as Hero).setdata(DataManager.getHeroById(spaceHeroList[i].confid).data);
+				if((spaceHeroList[i] as Hero).hasEventListener(TouchEvent.TOUCH))
+					{
+						(spaceHeroList[i] as Hero).removeEventListener(TouchEvent.TOUCH,touchHandler);
+						(spaceHeroList[i] as Hero).addEventListener(TouchEvent.TOUCH,touchAction);
+					}
 			}
-			ElementManager.getInstance().addHeroToSpace(UserManager.getInstance().getHeroList());
-			ElementManager.getInstance().addItemToSpace(UserManager.getInstance().getToolList());
+			this.addHeroToSpace(spaceHeroList);
+			this.addItemToSpace(UserManager.getInstance().getToolList());
 		}
+		
 		public function clear():void
 		{
 			this.cleardata();
@@ -726,6 +791,7 @@ package com.manager
 					}
 				}
 			}
+			BottomSprite.fullLine();
 		}
 	}
 }
