@@ -181,15 +181,21 @@ package com.manager
 			}
 			if(this._selectedSpaceHero)
 			{
-				if(touchCell.__isBorn)
+				if(((UserManager.getInstance().isMaster && touchCell.__backid == 1) || (!UserManager.getInstance().isMaster && touchCell.__backid == 9))
+					&& touchCell.__part && touchCell.__part.isborn)
 				{
 					DataManager.setSave(true);
 					this.addToStage(this._selectedSpaceHero,touchCell);
+				}
+				else
+				{
+					return;
 				}
 				this._selectedSpaceHero = null;
 			}
 			this.removeSelectAttack();
 		}
+		
 		public function addToStage(h:Hero,cell:Cell):void
 		{
 			var index:int = this.getSpaceIndex(h);
@@ -663,13 +669,51 @@ package com.manager
 			return this.heroPool;
 		}
 		
+		public function removeHero(h:Hero):void
+		{
+			var i:int = this.heroPool.indexOf(h);
+			if(i!=-1)
+			{
+				this.heroPool.splice(i,1);
+				h.cell = null;
+				if(h.hasEventListener(TouchEvent.TOUCH))
+				{
+					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
+				}
+				h.removeFromParent(true);
+				h = null;
+			}
+		}
+		
+		public function reset():void
+		{
+			var heroStageList:Vector.<Hero> = UserManager.getInstance().getHeroStageList();
+			var heroStageListB:Vector.<Hero> = UserManager.getInstance().getHeroStageListB();
+			for(var i:String in heroStageListB)
+			{
+				heroStageList.push(heroStageListB[i]);
+			}
+			for(var i:String in heroStageList)
+			{				
+				ElementManager.getInstance().addHero(heroStageList[i],heroStageList[i].__cell,false);
+			}
+			ElementManager.getInstance().addHeroToSpace(UserManager.getInstance().getHeroList());
+			ElementManager.getInstance().addItemToSpace(UserManager.getInstance().getToolList());
+		}
 		public function clear():void
 		{
 			this.cleardata();
 			DataManager.save = false;
 			while(this.heroPool.length>0)
 			{
-				heroPool.pop().removeFromParent(true);
+				var h:Hero = this.heroPool.pop();
+				h.cell = null;
+				if(h.hasEventListener(TouchEvent.TOUCH))
+				{
+					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
+				}
+				h.removeFromParent(true);
+				h = null;
 			}
 			for(var i:int=0;i<6;i++)
 			{
