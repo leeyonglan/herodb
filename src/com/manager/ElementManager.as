@@ -28,10 +28,10 @@ package com.manager
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
 	
+	import util.MapElementEffect;
 	import util.PropEffect;
 	import util.RangUtil;
 	import util.SkillAttack;
-	import util.MapElementEffect;
 
 	public class ElementManager
 	{
@@ -431,10 +431,10 @@ package com.manager
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
-		//public function get
+		
 		private function touchAction(e:TouchEvent):void
 		{
-			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.ENDED);
+			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.BEGAN);
 			if(touch)
 			{
 				switchSpaceStatus();
