@@ -58,7 +58,7 @@ package com.manager
 		
 		private var heroTween:Tween;
 		private var heroTweenUp:Tween;
-		
+		private static const HELPER_POINT:Point = new Point();
 		public function ElementManager()
 		{
 			
@@ -105,7 +105,7 @@ package com.manager
 			{
 				spaceDict[i] = {pos:new Point(this._spaceStartX+i*100,600),content:null};
 			}
-			HeroEventDispatcher.getInstance().addEventListener(Global.CELL_TOUCH,cellTouchHandler);
+			HeroEventDispatcher.getInstance().addListener(Global.CELL_TOUCH,cellTouchHandler);
 		}
 		
 		public function actionStep(data:Object):void
@@ -170,6 +170,9 @@ package com.manager
 					}
 					var it:Item = UserManager.getInstance().getUbItemById(data.params.tid);
 					PropEffect.useTool(hero,it);
+					
+					var evt:Event = new Event(Global.ACTION_DATA_STEP);
+					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
 			}
 		}
@@ -178,7 +181,7 @@ package com.manager
 		 * @param e
 		 * 
 		 */
-		private function cellTouchHandler(e:Event):void
+		public function cellTouchHandler(e:Event):void
 		{
 			if(!DataManager.canOpt())return;
 			var touchCell:Cell = e.data as Cell;
@@ -221,7 +224,6 @@ package com.manager
 		{
 			var index:int = this.getSpaceIndex(h);
 			this.spaceDict[index].content = null;
-			
 			h.selected = false;
 			var onPos:Point = CellManager.getHeroPosOncell(h,cell);
 			heroTweenUp = new Tween(h,.01);
@@ -239,6 +241,20 @@ package com.manager
 			(arg[0] as Hero).removeEventListener(TouchEvent.TOUCH,touchAction);
 			this.addHero(arg[0],arg[1]);
 		}
+		private function getTouchedHero(t:Touch):Hero
+		{
+			var h:Hero;
+			for(var i:String in heroPool)
+			{
+				t.getLocation(heroPool[i], HELPER_POINT);
+				if(heroPool[i].hitTest(HELPER_POINT,true))
+				{
+					h = heroPool[i];
+					break;
+				}
+			}
+			return h;
+		}
 		/**
 		 *	 
 		 * @param e
@@ -246,17 +262,27 @@ package com.manager
 		 */
 		private function touchHandler(e:TouchEvent):void
 		{
-			var touch:Touch = e.getTouch(this._elementLayer.stage);
+			var touch:Touch = e.getTouch(Starling.current.stage);
 			if(touch == null) return;
 			if(touch.phase == TouchPhase.ENDED)
 			{
-				this._attackedHero = e.currentTarget as Hero;
+				
+				this._attackedHero = this.getTouchedHero(touch);
+				if(this._attackedHero == null)
+				{
+					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
+					var evt:Event = new Event(Global.CELL_TOUCH,false,c);
+					HeroEventDispatcher.getInstance().dispatchEvent(evt);
+					return;
+				}
+				//判断双击查看
 				if(touch.tapCount ==2)
 				{
 					PanelManager.getInstance().open(Global.PANEL_SOLDIERINFO);
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
+				//判断攻击
 				trace("tapCount:"+touch.tapCount);
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
 					&& !(this._attackedHero.__isMe) && this._attackRangHero!=null 
@@ -268,7 +294,22 @@ package com.manager
 					this.removeSelectAttack();
 					return;
 				}
-				
+				//判断使用道具
+				if(this._selectedItem)
+				{
+					if(!this._attackedHero.__isMe)return;
+					if(!DataManager.canOpt())return;
+					PropEffect.useTool(this._attackedHero,this._selectedItem);
+					var master:String = UserManager.getInstance().isMaster?"1":"0";
+					DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,(this._attackedHero as Hero).id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id});
+					var index:int = getSpaceIndex(this._selectedItem);
+					spaceDict[index].content = null;
+					this._selectedItem = null;
+					return;
+				}
+			}
+			if(touch.phase == TouchPhase.BEGAN && !this._selectedHero)
+			{
 				this.cleardata();
 				for(var i:String in heroPool)
 				{
@@ -282,17 +323,6 @@ package com.manager
 						}
 						else
 						{
-							if(this._selectedItem)
-							{
-								if(!DataManager.canOpt())return;
-								PropEffect.useTool(item,this._selectedItem);
-								var master:String = UserManager.getInstance().isMaster?"1":"0";
-								DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,(item as Hero).id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id});
-								var index:int = getSpaceIndex(this._selectedItem);
-								spaceDict[index].content = null;
-								this._selectedItem = null;
-								return;
-							}
 							this._selectedHero = item;
 							this._selectedSpaceHero = null;
 							(item as Hero).switchStat(Hero.ACTIVATE);
@@ -325,12 +355,11 @@ package com.manager
 			{
 				hero.setDisDir();
 			}
-			SkillAttack.doAttack(hero,toHero);
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,master,{hid:toHero.id});
-			
-			var evt:Event = new Event(Global.ACTION_DATA_STEP);
-			HeroEventDispatcher.getInstance().dispatchEvent(evt);
+//			
+//			var evt:Event = new Event(Global.ACTION_DATA_STEP);
+//			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
 		private function actionHandler(e:Event):void
@@ -345,7 +374,8 @@ package com.manager
 						{
 							h.setDisDir();
 						}
-						h.switchStat(Hero.STAND);
+						SkillAttack.doAttack(h,h.toHero);
+						h.switchStat(Hero.STAND);					
 					}
 					this.cleardata();
 					break;
@@ -375,7 +405,6 @@ package com.manager
 				hero.setDisDir();
 			}
 			hero.switchStat(Hero.MOVE);
-			MapElementEffect.removeMp(hero);
 			heroTween = new Tween(hero,.5);
 			heroTween.animate("x",toPos.x);
 			heroTween.animate("y",toPos.y);
@@ -434,8 +463,9 @@ package com.manager
 		
 		private function touchAction(e:TouchEvent):void
 		{
-			var touch:Touch = e.getTouch(this._elementLayer.stage,TouchPhase.BEGAN);
-			if(touch)
+			var touch:Touch = e.getTouch(Starling.current.stage);
+			if(touch == null)return;
+			if(touch.phase == TouchPhase.BEGAN)
 			{
 				switchSpaceStatus();
 				if(e.currentTarget is Hero)
@@ -449,6 +479,20 @@ package com.manager
 				{
 					this._selectedItem = e.currentTarget as Item;
 					this._selectedItem.selected = true;
+				}
+			}
+			if(touch.phase == TouchPhase.ENDED)
+			{
+				if(e.currentTarget is Hero)
+				{
+					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
+					if(c == null)return;
+					var evt:Event = new Event(Global.CELL_TOUCH,false,c);
+					HeroEventDispatcher.getInstance().dispatchEvent(evt);
+				}
+				if(e.currentTarget is Item)
+				{
+					this.touchHandler(e);
 				}
 			}
 		}
