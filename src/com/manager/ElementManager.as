@@ -11,12 +11,14 @@ package com.manager
 	
 	import flash.geom.Point;
 	import flash.utils.Dictionary;
+	import flash.media.Sound;
 	
 	import global.Global;
 	
 	import item.Cell;
 	
 	import model.DataManager;
+	import model.SoundManager;
 	
 	import starling.animation.Tween;
 	import starling.core.Starling;
