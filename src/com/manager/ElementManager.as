@@ -394,6 +394,10 @@ package com.manager
 			{
 				return;
 			}
+			if(hero.__cell && hero.__cell.__part)
+			{
+				MapElementEffect.removeMp(hero);
+			}
 			CellManager.getInstance().hideRang();
 			
 			var toPos:Point = CellManager.getHeroPosOncell(hero,toCell);
@@ -795,6 +799,7 @@ package com.manager
 			for(var i:String in heroStageListB)
 			{
 				UserManager.setProperty(heroStageListB[i],heroStageModelB[i]);
+				(heroStageListB[i] as Hero).hideAttackEffect();
 				this.addHero(heroStageListB[i],heroStageListB[i].__cell,false);
 			}
 			var spaceHeroList:Vector.<Hero> = UserManager.getInstance().getHeroList();
@@ -805,6 +810,8 @@ package com.manager
 					{
 						(spaceHeroList[i] as Hero).removeEventListener(TouchEvent.TOUCH,touchHandler);
 						(spaceHeroList[i] as Hero).addEventListener(TouchEvent.TOUCH,touchAction);
+						(spaceHeroList[i] as Hero).switchStat(Hero.STAND);
+						(spaceHeroList[i] as Hero).clear();
 					}
 			}
 			this.addHeroToSpace(spaceHeroList);

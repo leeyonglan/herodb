@@ -16,6 +16,8 @@ package com.manager
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
+	
+	import util.ToolUtil;
 
 	public class CellManager
 	{
@@ -23,6 +25,7 @@ package com.manager
 		private var _cellLayer:CellLayer;
 		private var _cellList:Vector.<Cell>;
 		private static const HELPER_POINT:Point = new Point();
+		private static var TranslatePoint:Point = new Point();
 		public function CellManager()
 		{
 		}
@@ -112,7 +115,13 @@ package com.manager
 			}
 			return new Point(x,y);
 		}
-		
+		public static function getPartPosOnHero(cell:Cell,hero:Hero):Point
+		{
+			TranslatePoint = new Point;
+			TranslatePoint.x = cell.x + (cell.width>>1);
+			TranslatePoint.y = cell.y + (cell.height>>1);
+			return ToolUtil.translate(TranslatePoint,cell.parent,hero);
+		}
 		public static function getPartPosOncell(display:DisplayObject,cell:Cell):Point
 		{
 			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2));
