@@ -10,8 +10,8 @@ package com.manager
 	import event.HeroEventDispatcher;
 	
 	import flash.geom.Point;
-	import flash.utils.Dictionary;
 	import flash.media.Sound;
+	import flash.utils.Dictionary;
 	
 	import global.Global;
 	
@@ -102,12 +102,32 @@ package com.manager
 		public function init(elementLayer:ElementLayer):void
 		{
 			this._elementLayer = elementLayer;
-			
+			Starling.current.stage.addEventListener(TouchEvent.TOUCH,stageTouchHandler);
 			for(var i:int=0;i<6;i++)
 			{
 				spaceDict[i] = {pos:new Point(this._spaceStartX+i*100,600),content:null};
 			}
 			HeroEventDispatcher.getInstance().addListener(Global.CELL_TOUCH,cellTouchHandler);
+		}
+		private function stageTouchHandler(e:TouchEvent):void
+		{
+			var touch:Touch = e.getTouch(Starling.current.stage);
+			if(touch == null) return;
+			if(touch.phase == TouchPhase.ENDED)
+			{
+				if(touch.tapCount == 1)
+				{
+					PanelManager.getInstance().closeAll();
+				}
+				if(!CellManager.getInstance().getTouchedCell(touch) && this._selectedSpaceHero)
+				{
+					this.rebackToSpace(this._selectedSpaceHero);
+				}
+				if(!CellManager.getInstance().getTouchedCell(touch) && this._selectedItem)
+				{
+					this.rebackToSpace(this._selectedItem);
+				}
+			}
 		}
 		
 		public function actionStep(data:Object):void
@@ -213,11 +233,24 @@ package com.manager
 				}
 				else
 				{
+					rebackToSpace(this._selectedSpaceHero);
 					this.cleardata();
 					this.switchSpaceStatus();
 					return;
 				}
 				this._selectedSpaceHero = null;
+			}
+			//TODO 判断道具是否可以用在格子上s
+			if(this._selectedItem)
+			{
+				if(this._selectedItem.ground == "1")
+				{
+					PropEffect.useToolOnCell(touchCell,this._selectedItem);
+				}
+				else
+				{
+					this.rebackToSpace(this._selectedItem);
+				}
 			}
 			this.removeSelectAttack();
 		}
@@ -273,6 +306,7 @@ package com.manager
 				if(this._attackedHero == null)
 				{
 					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
+					if(c == null) return;
 					var evt:Event = new Event(Global.CELL_TOUCH,false,c);
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					return;
@@ -467,6 +501,7 @@ package com.manager
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
 		
+		private  static const MOVEHELPPOINT = new Point; 
 		private function touchAction(e:TouchEvent):void
 		{
 			var touch:Touch = e.getTouch(Starling.current.stage);
@@ -485,6 +520,7 @@ package com.manager
 				{
 					this._selectedItem = e.currentTarget as Item;
 					this._selectedItem.selected = true;
+					_selectedSpaceHero = null;
 				}
 			}
 			if(touch.phase == TouchPhase.ENDED)
@@ -500,6 +536,17 @@ package com.manager
 				{
 					this.touchHandler(e);
 				}
+			}
+			if(touch.phase == TouchPhase.MOVED)
+			{
+				touch.getLocation(this._elementLayer,MOVEHELPPOINT);
+				if(e.currentTarget is Hero)
+				{
+					MOVEHELPPOINT.x = (MOVEHELPPOINT.x + (e.currentTarget as DisplayObject).width/2);
+					MOVEHELPPOINT.y = (MOVEHELPPOINT.y + (e.currentTarget as DisplayObject).height/2);
+				}
+				(e.currentTarget as DisplayObject).x = MOVEHELPPOINT.x;
+				(e.currentTarget as DisplayObject).y = MOVEHELPPOINT.y;
 			}
 		}
 		
@@ -566,6 +613,20 @@ package com.manager
 				}
 			}
 		}
+		
+		public function rebackToSpace(dis:DisplayObject):void
+		{
+			for(var i:String in this.spaceDict)
+			{
+				if(this.spaceDict[i].content == dis)
+				{
+					dis.x = this.spaceDict[i].pos.x;
+					dis.y = this.spaceDict[i].pos.y;
+					break;
+				}
+			}
+		}
+		
 		public function getHeroInSpaceById(id:String):Hero
 		{
 			var hero:Hero;
