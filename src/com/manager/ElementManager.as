@@ -245,7 +245,7 @@ package com.manager
 			{
 				if(this._selectedItem.ground == "1")
 				{
-					PropEffect.useToolOnCell(touchCell,this._selectedItem);
+					toUseTool(touchCell);
 				}
 				else
 				{
@@ -253,6 +253,34 @@ package com.manager
 				}
 			}
 			this.removeSelectAttack();
+		}
+		
+		/**
+		 * 使用道具统一接口 
+		 * @param obj
+		 * 
+		 */
+		private function toUseTool(obj:DisplayObject):void
+		{
+			var id:String
+			var target:String
+			if(obj is Hero)
+			{
+				PropEffect.useTool(obj as Hero,this._selectedItem);
+				id = (obj as Hero).id;
+				target = "1";
+			}
+			if(obj is Cell)
+			{
+				PropEffect.useToolOnCell(obj as Cell,this._selectedItem);
+				id = String((obj as Cell).__id);
+				target = "2";
+			}
+			var master:String = UserManager.getInstance().isMaster?"1":"0";
+			DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id,target:target});
+			var index:int = getSpaceIndex(this._selectedItem);
+			spaceDict[index].content = null;
+			this._selectedItem = null;
 		}
 		
 		public function addToStage(h:Hero,cell:Cell):void
@@ -318,15 +346,23 @@ package com.manager
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
-				//判断攻击
+				
+				//判断攻击、友军加血等
 				trace("tapCount:"+touch.tapCount);
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
-					&& !(this._attackedHero.__isMe) && this._attackRangHero!=null 
+					&& this._attackRangHero!=null 
 					&& this._attackRangHero.indexOf(this._attackedHero)!=-1)
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
-					this.attack(this._selectedHero,this._attackedHero);
+					if(this._attackedHero.__isMe)
+					{
+						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);	
+					}
+					else
+					{
+						this.attack(this._selectedHero,this._attackedHero);
+					}
 					this.removeSelectAttack();
 					return;
 				}
@@ -335,12 +371,7 @@ package com.manager
 				{
 					if(!this._attackedHero.__isMe)return;
 					if(!DataManager.canOpt())return;
-					PropEffect.useTool(this._attackedHero,this._selectedItem);
-					var master:String = UserManager.getInstance().isMaster?"1":"0";
-					DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,(this._attackedHero as Hero).id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id});
-					var index:int = getSpaceIndex(this._selectedItem);
-					spaceDict[index].content = null;
-					this._selectedItem = null;
+					this.toUseTool(this._attackedHero);
 					return;
 				}
 			}
@@ -369,6 +400,11 @@ package com.manager
 							//attack rang
 							var cids:Vector.<int> = CellManager.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
 							_attackRangHero = this.getRangHero(cids,false);
+							var inx:int = _attackRangHero.indexOf(this._selectedHero); 
+							if(inx!=-1)
+							{
+								_attackRangHero.splice(inx,1);
+							}
 							this.showSelectAttack(_attackRangHero);
 						}
 					}
@@ -380,7 +416,6 @@ package com.manager
 				}
 			}
 		}
-
 		public function attack(hero:Hero,toHero:Hero):void
 		{
 			hero.selected = false;
@@ -393,9 +428,6 @@ package com.manager
 			}
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ATTACK,master,{hid:toHero.id});
-//			
-//			var evt:Event = new Event(Global.ACTION_DATA_STEP);
-//			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
 		private function actionHandler(e:Event):void
@@ -683,7 +715,7 @@ package com.manager
 			var list:Vector.<Hero> = new Vector.<Hero>;
 			for(var i:String in heroPool)
 			{
-				if(ids.indexOf((heroPool[i] as Hero).__cell.__id)!=-1 && (heroPool[i] as Hero).__isMe == isme)
+				if(ids.indexOf((heroPool[i] as Hero).__cell.__id)!=-1)
 				{
 					list.push(heroPool[i]);
 				}
@@ -844,45 +876,52 @@ package com.manager
 		public function reset():void
 		{
 			this.cleardata();
+			this.clearHeroPool();
 			EffectManager.getInstance().clear();
 			DataManager.getInstance().clear();
-			
+			DataManager.setSave(false);
 			var heroStageList:Vector.<Hero> = UserManager.getInstance().getHeroStageList();
 			var heroStageListB:Vector.<Hero> = UserManager.getInstance().getHeroStageListB();
+			var actionList:Vector.<Hero> = DataManager.heroTa;
 			var heroStageModel:Array = UserManager.getInstance().getHeroStageModel();
 			var heroStageModelB:Array = UserManager.getInstance().getHeroStageModelB();
+			
 			for(var i:String in heroStageList)
 			{
+				(heroStageList[i] as Hero).hideAttackEffect();
+				heroStageList[i].clearPart();
 				UserManager.setProperty(heroStageList[i],heroStageModel[i]);
 				this.addHero(heroStageList[i],heroStageList[i].__cell,false);
 			}
 			
 			for(var i:String in heroStageListB)
 			{
-				UserManager.setProperty(heroStageListB[i],heroStageModelB[i]);
 				(heroStageListB[i] as Hero).hideAttackEffect();
+				heroStageListB[i].clearPart();
+				UserManager.setProperty(heroStageListB[i],heroStageModelB[i]);
 				this.addHero(heroStageListB[i],heroStageListB[i].__cell,false);
+			}
+			for(var i:String in actionList)
+			{
+				actionList[i].hideAttackEffect();
+				actionList[i].clearPart();
+				UserManager.setProperty(actionList[i],DataManager.getHeroByFieldData(actionList[i].id,false));
+				this.addHero(actionList[i],actionList[i].__cell,false);
+				actionList[i].updatePos(true);
 			}
 			var spaceHeroList:Vector.<Hero> = UserManager.getInstance().getHeroList();
 			for(var i:String in spaceHeroList)
 			{
 				(spaceHeroList[i] as Hero).setdata(DataManager.getHeroById(spaceHeroList[i].confid).data);
-				if((spaceHeroList[i] as Hero).hasEventListener(TouchEvent.TOUCH))
-					{
-						(spaceHeroList[i] as Hero).removeEventListener(TouchEvent.TOUCH,touchHandler);
-						(spaceHeroList[i] as Hero).addEventListener(TouchEvent.TOUCH,touchAction);
-						(spaceHeroList[i] as Hero).switchStat(Hero.STAND);
-						(spaceHeroList[i] as Hero).clear();
-					}
+				(spaceHeroList[i] as Hero).removeEventListener(TouchEvent.TOUCH,touchHandler);
+				(spaceHeroList[i] as Hero).switchStat(Hero.STAND);
+				(spaceHeroList[i] as Hero).clear();
 			}
 			this.addHeroToSpace(spaceHeroList);
 			this.addItemToSpace(UserManager.getInstance().getToolList());
 		}
-		
-		public function clear():void
+		private function clearHeroPool():void
 		{
-			this.cleardata();
-			DataManager.save = false;
 			while(this.heroPool.length>0)
 			{
 				var h:Hero = this.heroPool.pop();
@@ -891,9 +930,14 @@ package com.manager
 				{
 					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
 				}
-				h.removeFromParent(true);
-				h = null;
-			}
+				h.removeFromParent(false);
+			}			
+		}
+		public function clear():void
+		{
+			this.cleardata();
+			DataManager.save = false;
+			this.clearHeroPool();
 			for(var i:int=0;i<6;i++)
 			{
 				if(spaceDict[i].content != null)
@@ -901,8 +945,8 @@ package com.manager
 					if(spaceDict[i].content.parent)
 					{
 						spaceDict[i].content.removeFromParent(true);
-						spaceDict[i].content = null;
 					}
+					spaceDict[i].content = null;
 				}
 			}
 			BottomSprite.fullLine();
