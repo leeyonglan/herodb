@@ -347,12 +347,15 @@ package com.manager
 			if(touch == null) return;
 			if(touch.phase == TouchPhase.ENDED)
 			{
-				
 				this._attackedHero = this.getTouchedHero(touch);
 				if(this._attackedHero == null)
 				{
 					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
-					if(c == null) return;
+					if(c == null)
+					{
+						e.stopPropagation();
+						return;
+					}
 					var evt:Event = new Event(Global.CELL_TOUCH,false,c);
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					return;
@@ -365,7 +368,7 @@ package com.manager
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
-				if(this._attackedHero == this._selectedHero)return;
+				
 				//判断攻击、友军加血等
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
 					&& this._attackRangHero!=null 
@@ -373,15 +376,16 @@ package com.manager
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
-					if(this._attackedHero.__isMe)
+					if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
 					{
 						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
 					}
-					else
+					else if(!this._attackRangHero)
 					{
 						this.attack(this._selectedHero,this._attackedHero);
 					}
 					this.removeSelectAttack();
+					this.cleardata();
 					return;
 				}
 				//判断使用道具
@@ -391,6 +395,7 @@ package com.manager
 					this.toUseTool(this._attackedHero);
 					return;
 				}
+				if(this._attackedHero == this._selectedHero)return;
 				this.cleardata();
 			}
 			if(touch.phase == TouchPhase.BEGAN && !this._selectedHero)
@@ -434,6 +439,7 @@ package com.manager
 				}
 			}
 		}
+		
 		public function attack(hero:Hero,toHero:Hero):void
 		{
 			hero.selected = false;
@@ -550,7 +556,10 @@ package com.manager
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
-		
+		private function touchAllAction(e:TouchEvent):void
+		{
+			
+		}
 		private  static const MOVEHELPPOINT = new Point; 
 		private function touchAction(e:TouchEvent):void
 		{
@@ -676,6 +685,7 @@ package com.manager
 					break;
 				}
 			}
+			this.cleardata();
 		}
 		
 		public function getHeroInSpaceById(id:String):Hero
