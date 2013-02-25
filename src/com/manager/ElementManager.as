@@ -182,17 +182,24 @@ package com.manager
 					this.attack(hero,toHero);
 					break;
 				case Global.DATA_ACTION_USETOOL:
-					if(UserManager.getInstance().isMaster && data.master == "1")
+					var it:Item = UserManager.getInstance().getUbItemById(data.params.tid);
+					if(data.params && data.params.hasOwnProperty("target") && data.params.target == "1")
 					{
-						var hero:Hero = this.getHeroInStageById(data.id,true);
+						if(UserManager.getInstance().isMaster && data.master == "1")
+						{
+							var hero:Hero = this.getHeroInStageById(data.id,true);
+						}
+						else
+						{
+							var hero:Hero = this.getHeroInStageById(data.id,false);
+						}
+						PropEffect.useTool(hero,it);
 					}
 					else
 					{
-						var hero:Hero = this.getHeroInStageById(data.id,false);
+						var cell:Cell = CellManager.getInstance().getCellById(data.id);
+						PropEffect.useToolOnCell(cell,it);
 					}
-					var it:Item = UserManager.getInstance().getUbItemById(data.params.tid);
-					PropEffect.useTool(hero,it);
-					
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
@@ -205,7 +212,12 @@ package com.manager
 		 */
 		public function cellTouchHandler(e:Event):void
 		{
-			if(!DataManager.canOpt())return;
+			if(!DataManager.canOpt())
+			{
+				if(this._selectedSpaceHero) this.rebackToSpace(this._selectedSpaceHero);
+				if(this._selectedItem) this.rebackToSpace(this._selectedItem);
+				return;
+			};
 			var touchCell:Cell = e.data as Cell;
 			if(this._selectedHero)
 			{
@@ -262,6 +274,11 @@ package com.manager
 		 */
 		private function toUseTool(obj:DisplayObject):void
 		{
+			if(!DataManager.canOpt())
+			{
+				this.rebackToSpace(this._selectedItem);
+				return;
+			}
 			var id:String
 			var target:String
 			if(obj is Hero)
@@ -276,6 +293,7 @@ package com.manager
 				id = String((obj as Cell).__id);
 				target = "2";
 			}
+			DataManager.setSave(true);
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id,target:target});
 			var index:int = getSpaceIndex(this._selectedItem);
@@ -339,6 +357,7 @@ package com.manager
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					return;
 				}
+				
 				//判断双击查看
 				if(touch.tapCount ==2)
 				{
@@ -346,9 +365,8 @@ package com.manager
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
-				
+				if(this._attackedHero == this._selectedHero)return;
 				//判断攻击、友军加血等
-				trace("tapCount:"+touch.tapCount);
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
 					&& this._attackRangHero!=null 
 					&& this._attackRangHero.indexOf(this._attackedHero)!=-1)
@@ -357,7 +375,7 @@ package com.manager
 					DataManager.setSave(true);
 					if(this._attackedHero.__isMe)
 					{
-						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);	
+						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
 					}
 					else
 					{
@@ -370,10 +388,10 @@ package com.manager
 				if(this._selectedItem)
 				{
 					if(!this._attackedHero.__isMe)return;
-					if(!DataManager.canOpt())return;
 					this.toUseTool(this._attackedHero);
 					return;
 				}
+				this.cleardata();
 			}
 			if(touch.phase == TouchPhase.BEGAN && !this._selectedHero)
 			{
@@ -540,6 +558,7 @@ package com.manager
 			if(touch == null)return;
 			if(touch.phase == TouchPhase.BEGAN)
 			{
+				this.cleardata();
 				switchSpaceStatus();
 				if(e.currentTarget is Hero)
 				{
