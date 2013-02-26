@@ -279,6 +279,7 @@ package com.manager
 				this.rebackToSpace(this._selectedItem);
 				return;
 			}
+			DataManager.setSave(true);
 			var id:String
 			var target:String
 			if(obj is Hero)
@@ -293,7 +294,6 @@ package com.manager
 				id = String((obj as Cell).__id);
 				target = "2";
 			}
-			DataManager.setSave(true);
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id,target:target});
 			var index:int = getSpaceIndex(this._selectedItem);
@@ -380,7 +380,7 @@ package com.manager
 					{
 						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
 					}
-					else if(!this._attackRangHero)
+					else if(!this._attackedHero.__isMe)
 					{
 						this.attack(this._selectedHero,this._attackedHero);
 					}
@@ -445,7 +445,14 @@ package com.manager
 			hero.selected = false;
 			hero.toHero = toHero;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
-			hero.switchStat(Hero.ATTACK);
+			if(PropEffect.hasSuperKill(hero._equip))
+			{
+				hero.switchStat(Hero.FINALATTACK);
+			}
+			else
+			{
+				hero.switchStat(Hero.ATTACK);
+			}
 			if(this.needDisDir(hero,toHero.__cell))
 			{
 				hero.setDisDir();
@@ -470,6 +477,8 @@ package com.manager
 						h.switchStat(Hero.STAND);					
 					}
 					this.cleardata();
+					var evt:Event = new Event(Global.ACTION_DATA_STEP);
+					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
 				case Global.HERO_SHOWATTACKED:
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -556,10 +565,7 @@ package com.manager
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
-		private function touchAllAction(e:TouchEvent):void
-		{
-			
-		}
+
 		private  static const MOVEHELPPOINT = new Point; 
 		private function touchAction(e:TouchEvent):void
 		{
