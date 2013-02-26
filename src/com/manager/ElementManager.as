@@ -125,6 +125,12 @@ package com.manager
 				}
 				if(!CellManager.getInstance().getTouchedCell(touch) && this._selectedItem)
 				{
+					var index:int = this.getSpaceIndex(this._selectedItem);
+					var point:Point = this.spaceDict[index].pos;
+					if(this._selectedItem.x == point.x && this._selectedItem.y == point.y)
+					{
+						return;
+					}
 					this.rebackToSpace(this._selectedItem);
 				}
 			}
@@ -217,7 +223,7 @@ package com.manager
 				if(this._selectedSpaceHero) this.rebackToSpace(this._selectedSpaceHero);
 				if(this._selectedItem) this.rebackToSpace(this._selectedItem);
 				return;
-			};
+			}
 			var touchCell:Cell = e.data as Cell;
 			if(this._selectedHero)
 			{
@@ -353,7 +359,6 @@ package com.manager
 					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
 					if(c == null)
 					{
-						e.stopPropagation();
 						return;
 					}
 					var evt:Event = new Event(Global.CELL_TOUCH,false,c);
@@ -915,27 +920,20 @@ package com.manager
 			EffectManager.getInstance().clear();
 			DataManager.getInstance().clear();
 			DataManager.setSave(false);
-			var heroStageList:Vector.<Hero> = UserManager.getInstance().getHeroStageList();
-			var heroStageListB:Vector.<Hero> = UserManager.getInstance().getHeroStageListB();
+			var heroStageList:Vector.<Hero> = DataManager.heroListBefor;
 			var actionList:Vector.<Hero> = DataManager.heroTa;
-			var heroStageModel:Array = UserManager.getInstance().getHeroStageModel();
-			var heroStageModelB:Array = UserManager.getInstance().getHeroStageModelB();
 			
-			for(var i:String in heroStageList)
+			if(heroStageList)
 			{
-				(heroStageList[i] as Hero).hideAttackEffect();
-				heroStageList[i].clearPart();
-				UserManager.setProperty(heroStageList[i],heroStageModel[i]);
-				this.addHero(heroStageList[i],heroStageList[i].__cell,false);
+				for(var i:String in heroStageList)
+				{
+					(heroStageList[i] as Hero).hideAttackEffect();
+					heroStageList[i].clearPart();
+					UserManager.setProperty(heroStageList[i],DataManager.getHeroByFieldData(heroStageList[i].id,heroStageList[i].__isMe));
+					this.addHero(heroStageList[i],heroStageList[i].__cell,false);
+				}
 			}
 			
-			for(var i:String in heroStageListB)
-			{
-				(heroStageListB[i] as Hero).hideAttackEffect();
-				heroStageListB[i].clearPart();
-				UserManager.setProperty(heroStageListB[i],heroStageModelB[i]);
-				this.addHero(heroStageListB[i],heroStageListB[i].__cell,false);
-			}
 			for(var i:String in actionList)
 			{
 				actionList[i].hideAttackEffect();
