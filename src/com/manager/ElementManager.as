@@ -538,6 +538,7 @@ package com.manager
 			}
 			return false;
 		}
+		
 		private function moveComplete(...arg):void
 		{
 			this.heroTween = null;
@@ -936,6 +937,7 @@ package com.manager
 			
 			for(var i:String in actionList)
 			{
+				if(heroStageList.indexOf(actionList[i])!=-1)continue;
 				actionList[i].hideAttackEffect();
 				actionList[i].clearPart();
 				UserManager.setProperty(actionList[i],DataManager.getHeroByFieldData(actionList[i].id,false));
@@ -953,6 +955,7 @@ package com.manager
 			this.addHeroToSpace(spaceHeroList);
 			this.addItemToSpace(UserManager.getInstance().getToolList());
 		}
+		
 		private function clearHeroPool():void
 		{
 			while(this.heroPool.length>0)
