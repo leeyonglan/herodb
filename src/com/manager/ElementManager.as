@@ -423,10 +423,10 @@ package com.manager
 							(item as Hero).switchStat(Hero.ACTIVATE);
 							(item as Hero).selected = true;
 							//step rang
-							this._rangIds = CellManager.getRangCell((item as Hero).__cell,int((item as Hero).mov));
+							this._rangIds = RangUtil.getRangCell((item as Hero).__cell,int((item as Hero).mov));
 							CellManager.getInstance().showRang(this._rangIds);
 							//attack rang
-							var cids:Vector.<int> = CellManager.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
+							var cids:Vector.<int> = RangUtil.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
 							_attackRangHero = this.getRangHero(cids,false);
 							var inx:int = _attackRangHero.indexOf(this._selectedHero); 
 							if(inx!=-1)
