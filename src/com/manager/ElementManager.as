@@ -548,12 +548,14 @@ package com.manager
 				(arg[0] as Hero).setDisDir();
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
+			(arg[0] as Hero).touchable = true;
 			this.cleardata();
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,master,{cid:(arg[1] as Cell).__id});
 			
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
+			
 		}
 		
 		public function addHero(hero:Hero,onCell:Cell,dispatchEvent:Boolean = true):void
