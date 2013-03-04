@@ -579,10 +579,12 @@ package com.manager
 		{
 			var touch:Touch = e.getTouch(Starling.current.stage);
 			if(touch == null)return;
+			
 			if(touch.phase == TouchPhase.BEGAN)
 			{
 				this.cleardata();
 				switchSpaceStatus();
+				if(!this.checkAndDisselect())return;
 				if(e.currentTarget is Hero)
 				{
 					_selectedSpaceHero = e.currentTarget as Hero;
@@ -641,6 +643,22 @@ package com.manager
 					spaceDict[i].content.selected = false;
 				}
 			}
+		}
+		private function checkAndDisselect():Boolean
+		{
+			if(this._selectedSpaceHero)
+			{
+				this._selectedSpaceHero.selected = false;
+				this._selectedSpaceHero = null;
+				return false;
+			}
+			if(this._selectedItem)
+			{
+				this._selectedItem.selected = false;
+				this._selectedItem = null;
+				return false;
+			}
+			return true;
 		}
 		/**
 		 *  
@@ -988,6 +1006,34 @@ package com.manager
 				}
 			}
 			BottomSprite.fullLine();
+		}
+		
+		/**
+		 *	提交成功后禁止一些操作 
+		 * 
+		 */
+		public function disableAll():void
+		{
+			for(var i:String in this.heroPool)
+			{
+				(this.heroPool[i] as Hero).removeEventListener(TouchEvent.TOUCH,touchHandler);
+			}
+			for(var j:int=0;j<6;j++)
+			{
+				if(spaceDict[j].content != null)
+				{
+					spaceDict[j].removeEventListener(TouchEvent.TOUCH,touchAction);
+				}
+			}
+			GameManager.getInstance().getHud().bottomSprite.disable();
+		}
+		/**
+		 * 进入游戏前恢复一些操作
+		 * 
+		 */
+		public function ableAll():void
+		{
+			GameManager.getInstance().getHud().bottomSprite.able();
 		}
 	}
 }
