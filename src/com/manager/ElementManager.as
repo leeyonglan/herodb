@@ -446,7 +446,7 @@ package com.manager
 							{
 								_attackRangHero.splice(inx,1);
 							}
-							this.showSelectAttack(_attackRangHero);
+							this.showSelectAttack(this._selectedHero,_attackRangHero);
 						}
 					}
 					else
@@ -562,15 +562,33 @@ package com.manager
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
 			(arg[0] as Hero).touchable = true;
+			//踩尸体
+			var deadHero:Hero = this.getHeroByCellId((arg[1] as Cell).__id);
+			if(deadHero)
+			{
+				this.removeHero(deadHero);
+			}
+			
 			this.cleardata();
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,(arg[0] as Hero).id,Global.DATA_ACTION_MOVE,master,{cid:(arg[1] as Cell).__id});
 			
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
-			
 		}
 		
+		private function getHeroByCellId(id:int):Hero
+		{
+			var h:Hero
+			for(var i:String in this.heroPool)
+			{
+				if(this.heroPool[i].__cell.__id == id)
+				{
+					h = this.heroPool[i];
+				}
+			}
+			return h;
+		}
 		public function addHero(hero:Hero,onCell:Cell,dispatchEvent:Boolean = true):void
 		{
 			hero.addTo(onCell);
@@ -836,13 +854,14 @@ package com.manager
 		{
 			for(var i:String in heroPool)
 			{
-				if((heroPool[i] as Hero).__cell.__id == cid)
+				if((heroPool[i] as Hero).__cell.__id == cid && Number((heroPool[i] as Hero).currenthp)>0)
 				{
 					return false;
 				}
 			}
 			return true;
 		}
+		
 		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
 		{
 			var mx:Number = toHero.x - hero.x;
@@ -915,7 +934,7 @@ package com.manager
 				tmc.visible = false;
 				this._elementLayer.removeChild(tmc,true);
 		}
-		public function showSelectAttack(heros:Vector.<Hero>):void
+		public function showSelectAttack(hero:Hero,heros:Vector.<Hero>):void
 		{
 			for(var i:String in heros)
 			{
