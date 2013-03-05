@@ -109,6 +109,7 @@ package com.manager
 			}
 			HeroEventDispatcher.getInstance().addListener(Global.CELL_TOUCH,cellTouchHandler);
 		}
+		
 		private function stageTouchHandler(e:TouchEvent):void
 		{
 			var touch:Touch = e.getTouch(Starling.current.stage);
@@ -132,6 +133,17 @@ package com.manager
 						return;
 					}
 					this.rebackToSpace(this._selectedItem);
+				}
+				for(var i:String in  this.heroPool)
+				{
+					//this.heroPool[i].hideBlood();
+				}
+			}
+			if(touch.phase == TouchPhase.BEGAN)
+			{
+				for(var i:String in  this.heroPool)
+				{
+					//this.heroPool[i].showBlood();
 				}
 			}
 		}
@@ -312,6 +324,7 @@ package com.manager
 			var index:int = this.getSpaceIndex(h);
 			this.spaceDict[index].content = null;
 			h.selected = false;
+			h.zoomOut();
 			var onPos:Point = CellManager.getHeroPosOncell(h,cell);
 			heroTweenUp = new Tween(h,.01);
 			heroTweenUp.animate("x",onPos.x);
@@ -574,7 +587,9 @@ package com.manager
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
 
-		private  static const MOVEHELPPOINT = new Point; 
+		private  static const MOVEHELPPOINT = new Point;
+		private  static var HELPX:Number;
+		private  static var HELPY:Number;
 		private function touchAction(e:TouchEvent):void
 		{
 			var touch:Touch = e.getTouch(Starling.current.stage);
@@ -582,9 +597,10 @@ package com.manager
 			
 			if(touch.phase == TouchPhase.BEGAN)
 			{
+				HELPX = touch.globalX;
+				HELPY = touch.globalY;
 				this.cleardata();
 				switchSpaceStatus();
-				if(!this.checkAndDisselect())return;
 				if(e.currentTarget is Hero)
 				{
 					_selectedSpaceHero = e.currentTarget as Hero;
@@ -601,16 +617,24 @@ package com.manager
 			}
 			if(touch.phase == TouchPhase.ENDED)
 			{
-				if(e.currentTarget is Hero)
+				if(HELPX== touch.globalX && HELPY==touch.globalY)
 				{
-					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
-					if(c == null)return;
-					var evt:Event = new Event(Global.CELL_TOUCH,false,c);
-					HeroEventDispatcher.getInstance().dispatchEvent(evt);
+					//e.currentTarget['zoomOut']();
+					
 				}
-				if(e.currentTarget is Item)
+				else
 				{
-					this.touchHandler(e);
+					if(e.currentTarget is Hero)
+					{
+						var c:Cell = CellManager.getInstance().getTouchedCell(touch);
+						if(c == null)return;
+						var evt:Event = new Event(Global.CELL_TOUCH,false,c);
+						HeroEventDispatcher.getInstance().dispatchEvent(evt);
+					}
+					if(e.currentTarget is Item)
+					{
+						this.touchHandler(e);
+					}
 				}
 			}
 			if(touch.phase == TouchPhase.MOVED)
@@ -618,11 +642,12 @@ package com.manager
 				touch.getLocation(this._elementLayer,MOVEHELPPOINT);
 				if(e.currentTarget is Hero)
 				{
-					MOVEHELPPOINT.x = (MOVEHELPPOINT.x + (e.currentTarget as DisplayObject).width/2);
-					MOVEHELPPOINT.y = (MOVEHELPPOINT.y + (e.currentTarget as DisplayObject).height/2);
+					MOVEHELPPOINT.x = (MOVEHELPPOINT.x + (e.currentTarget as DisplayObject).width/4);
+					MOVEHELPPOINT.y = (MOVEHELPPOINT.y + (e.currentTarget as DisplayObject).height/4);
 				}
 				(e.currentTarget as DisplayObject).x = MOVEHELPPOINT.x;
 				(e.currentTarget as DisplayObject).y = MOVEHELPPOINT.y;
+				e.currentTarget["zoomIn"]();
 			}
 		}
 		
@@ -648,14 +673,10 @@ package com.manager
 		{
 			if(this._selectedSpaceHero)
 			{
-				this._selectedSpaceHero.selected = false;
-				this._selectedSpaceHero = null;
 				return false;
 			}
 			if(this._selectedItem)
 			{
-				this._selectedItem.selected = false;
-				this._selectedItem = null;
 				return false;
 			}
 			return true;
@@ -714,6 +735,7 @@ package com.manager
 				{
 					dis.x = this.spaceDict[i].pos.x;
 					dis.y = this.spaceDict[i].pos.y;
+					dis['zoomOut']();
 					break;
 				}
 			}
@@ -918,19 +940,23 @@ package com.manager
 			return this.heroPool;
 		}
 		
+		/**
+		 *只是清除 
+		 * @param h
+		 * 
+		 */
 		public function removeHero(h:Hero):void
 		{
 			var i:int = this.heroPool.indexOf(h);
 			if(i!=-1)
 			{
 				this.heroPool.splice(i,1);
-				h.cell = null;
+				h.clear();
 				if(h.hasEventListener(TouchEvent.TOUCH))
 				{
 					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
 				}
 				h.removeFromParent(true);
-				h = null;
 			}
 		}
 		
@@ -987,7 +1013,7 @@ package com.manager
 					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
 				}
 				h.removeFromParent(false);
-			}			
+			}		
 		}
 		public function clear():void
 		{
@@ -1020,9 +1046,9 @@ package com.manager
 			}
 			for(var j:int=0;j<6;j++)
 			{
-				if(spaceDict[j].content != null)
+				if(spaceDict[j].content != null && (spaceDict[j].content as Sprite).hasEventListener(TouchEvent.TOUCH))
 				{
-					spaceDict[j].removeEventListener(TouchEvent.TOUCH,touchAction);
+					spaceDict[j].content.removeEventListener(TouchEvent.TOUCH,touchAction);
 				}
 			}
 			GameManager.getInstance().getHud().bottomSprite.disable();
