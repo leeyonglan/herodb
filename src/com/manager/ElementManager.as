@@ -848,6 +848,18 @@ package com.manager
 			}
 			return list;
 		}
+		public function getHerosInStage(isMe:Boolean):Vector.<Hero>
+		{
+			var list:Vector.<Hero> = new Vector.<Hero>;
+			for(var i:String in this.heroPool)
+			{
+				if(this.heroPool[i].isMe == isMe)
+				{
+					list.push(this.heroPool[i]);
+				}
+			}
+			return list;
+		}
 		
 		public function isEmpty(cid:int):Boolean
 		{
