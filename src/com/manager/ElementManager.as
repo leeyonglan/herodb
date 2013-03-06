@@ -136,14 +136,14 @@ package com.manager
 				}
 				for(var i:String in  this.heroPool)
 				{
-					//this.heroPool[i].hideBlood();
+					this.heroPool[i].hideBlood();
 				}
 			}
 			if(touch.phase == TouchPhase.BEGAN)
 			{
 				for(var i:String in  this.heroPool)
 				{
-					//this.heroPool[i].showBlood();
+					this.heroPool[i].showBlood();
 				}
 			}
 		}
@@ -560,14 +560,14 @@ package com.manager
 			{
 				(arg[0] as Hero).setDisDir();
 			}
-			(arg[0] as Hero).addTo(arg[1] as Cell);
-			(arg[0] as Hero).touchable = true;
 			//踩尸体
 			var deadHero:Hero = this.getHeroByCellId((arg[1] as Cell).__id);
 			if(deadHero)
 			{
 				this.removeHero(deadHero);
 			}
+			(arg[0] as Hero).addTo(arg[1] as Cell);
+			(arg[0] as Hero).touchable = true;
 			
 			this.cleardata();
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
@@ -637,8 +637,7 @@ package com.manager
 			{
 				if(HELPX== touch.globalX && HELPY==touch.globalY)
 				{
-					//e.currentTarget['zoomOut']();
-					
+					e.stopPropagation();
 				}
 				else
 				{
@@ -934,11 +933,12 @@ package com.manager
 				tmc.visible = false;
 				this._elementLayer.removeChild(tmc,true);
 		}
+		
 		public function showSelectAttack(hero:Hero,heros:Vector.<Hero>):void
 		{
 			for(var i:String in heros)
 			{
-				heros[i].showAttackEffect();
+				EffectManager.showAttackEffects(hero,heros[i]);
 			}
 		}
 		
@@ -946,7 +946,7 @@ package com.manager
 		{
 			for(var i:String in heroPool)
 			{
-				heroPool[i].hideAttackEffect();
+				EffectManager.hideAttackEffect(this.heroPool[i]);
 			}			
 		}
 		
@@ -993,7 +993,7 @@ package com.manager
 			{
 				for(var i:String in heroStageList)
 				{
-					(heroStageList[i] as Hero).hideAttackEffect();
+					EffectManager.fasthideAttackEffect(heroStageList[i] as Hero);
 					heroStageList[i].clearPart();
 					UserManager.setProperty(heroStageList[i],DataManager.getHeroByFieldData(heroStageList[i].id,heroStageList[i].__isMe));
 					this.addHero(heroStageList[i],heroStageList[i].__cell,false);
@@ -1003,7 +1003,7 @@ package com.manager
 			for(var i:String in actionList)
 			{
 				if(heroStageList.indexOf(actionList[i])!=-1)continue;
-				actionList[i].hideAttackEffect();
+				EffectManager.fasthideAttackEffect(actionList[i]);
 				actionList[i].clearPart();
 				UserManager.setProperty(actionList[i],DataManager.getHeroByFieldData(actionList[i].id,false));
 				this.addHero(actionList[i],actionList[i].__cell,false);
