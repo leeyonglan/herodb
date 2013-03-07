@@ -853,7 +853,7 @@ package com.manager
 			var list:Vector.<Hero> = new Vector.<Hero>;
 			for(var i:String in this.heroPool)
 			{
-				if(this.heroPool[i].isMe == isMe)
+				if(this.heroPool[i].__isMe == isMe)
 				{
 					list.push(this.heroPool[i]);
 				}
