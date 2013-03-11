@@ -462,7 +462,7 @@ package com.manager
 							CellManager.getInstance().showRang(this._rangIds);
 							//attack rang
 							var cids:Vector.<int> = RangUtil.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
-							_attackRangHero = this.getRangHero(cids,false);
+							_attackRangHero = this.getRangHero(cids);
 							var inx:int = _attackRangHero.indexOf(this._selectedHero); 
 							if(inx!=-1)
 							{
@@ -513,7 +513,14 @@ package com.manager
 						{
 							h.setDisDir();
 						}
-						SkillAttack.doAttack(h,h.toHero);
+						if(h.toHero.add_shield =="")
+						{
+							SkillAttack.doAttack(h,h.toHero);
+						}
+						else
+						{
+							EffectManager.removeShieldEffect(h.toHero);
+						}
 						h.switchStat(Hero.STAND);					
 					}
 					this.cleardata();
