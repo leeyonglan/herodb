@@ -158,15 +158,7 @@ package com.manager
 					this.addHero(hero,cell);
 					break;
 				case Global.DATA_ACTION_MOVE:
-					if(UserManager.getInstance().isMaster && data.master == "1")
-					{
-						var hero:Hero = this.getHeroInStageById(data.id,true);
-					}
-					else
-					{
-						var hero:Hero = this.getHeroInStageById(data.id,false);
-					}
-				
+					var hero:Hero = this.getHeroByFlag(data.master,data.id);
 					var cell:Cell = CellManager.getInstance().getCellById(data.params.cid);
 					this.moveHero(hero,cell);
 					break;
@@ -203,14 +195,7 @@ package com.manager
 					var it:Item = UserManager.getInstance().getUbItemById(data.params.tid);
 					if(data.params && data.params.hasOwnProperty("target") && data.params.target == "1")
 					{
-						if(UserManager.getInstance().isMaster && data.master == "1")
-						{
-							var hero:Hero = this.getHeroInStageById(data.id,true);
-						}
-						else
-						{
-							var hero:Hero = this.getHeroInStageById(data.id,false);
-						}
+						var hero:Hero = this.getHeroByFlag(data.master,data.id);
 						PropEffect.useTool(hero,it);
 					}
 					else
@@ -222,6 +207,33 @@ package com.manager
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
 			}
+		}
+		private function getHeroByFlag(flag:String,id:String):Hero
+		{
+			var hero:Hero;
+			if(flag == "1")
+			{
+				if(UserManager.getInstance().isMaster)
+				{
+					hero = this.getHeroInStageById(id,true);
+				}
+				else
+				{
+					hero = this.getHeroInStageById(id,false);
+				}
+			}
+			if(flag == "0")
+			{
+				if(UserManager.getInstance().isMaster)
+				{
+					hero = this.getHeroInStageById(id,false);
+				}
+				else
+				{
+					hero = this.getHeroInStageById(id,true);
+				}
+			}
+			return hero;
 		}
 		/**
 		 * 
