@@ -406,10 +406,12 @@ package com.manager
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
+					//辅助
 					if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
 					{
 						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
 					}
+					//攻击
 					else if(!this._attackedHero.__isMe)
 					{
 						this.attack(this._selectedHero,this._attackedHero);
