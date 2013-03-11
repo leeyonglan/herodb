@@ -394,13 +394,20 @@ package com.manager
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
-					if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
+					if(this._attackedHero.currenthp == "0" && !this._attackedHero.__isMe)
 					{
-						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
+						this.moveHero(this._selectedHero,this._attackedHero.__cell);
 					}
-					else if(!this._attackedHero.__isMe)
+					else
 					{
-						this.attack(this._selectedHero,this._attackedHero);
+						if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
+						{
+							SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
+						}
+						else if(!this._attackedHero.__isMe)
+						{
+							this.attack(this._selectedHero,this._attackedHero);
+						}
 					}
 					this.removeSelectAttack();
 					this.cleardata();
@@ -830,15 +837,10 @@ package com.manager
 		 * @return 
 		 * 
 		 */
-		public function getRangHeros(ids:Vector.<Vector.<int>>,type:int):Vector.<Hero>
+		public function getRangHeros(ids:Vector.<Vector.<int>>,isme:Boolean):Vector.<Hero>
 		{
 			var list:Vector.<Hero> = new Vector.<Hero>;
 			var idss:Vector.<int> = RangUtil.vectorToList(ids);
-			if(type ==3)
-			{
-				this.heroPool;
-			}
-			var isme:Boolean = (type ==1)?true:false;
 			for(var i:String in heroPool)
 			{
 				if(idss.indexOf((heroPool[i] as Hero).__cell.__id)!=-1 && (heroPool[i] as Hero).__isMe == isme)

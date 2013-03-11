@@ -14,7 +14,6 @@ package net
 	public class QueueLoader
 	{
 		private static const _swfContext:LoaderContext=new LoaderContext(false, ApplicationDomain.currentDomain);
-
 		private var loadList:Array;
 		private var urlLoader:URLLoader;
 		private var loader:Loader;
