@@ -406,15 +406,23 @@ package com.manager
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
-					//辅助
-					if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
+					//踩尸体
+					if(this._attackedHero.currenthp == "0")
 					{
-						SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
+						this.moveHero(this._selectedHero,this._attackedHero.__cell);
 					}
-					//攻击
-					else if(!this._attackedHero.__isMe)
+					else
 					{
-						this.attack(this._selectedHero,this._attackedHero);
+						//辅助
+						if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
+						{
+							SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
+						}
+						//攻击
+						else if(!this._attackedHero.__isMe)
+						{
+							this.attack(this._selectedHero,this._attackedHero);
+						}
 					}
 					this.removeSelectAttack();
 					this.cleardata();
@@ -579,6 +587,7 @@ package com.manager
 			if(deadHero)
 			{
 				this.removeHero(deadHero);
+				SkillAttack.processStepOnDead(arg[0],deadHero);
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
 			(arg[0] as Hero).touchable = true;
@@ -824,7 +833,7 @@ package com.manager
 			return this._selectedHero;
 		}
 		
-		public function getRangHero(ids:Vector.<int>,isme:Boolean):Vector.<Hero>
+		public function getRangHero(ids:Vector.<int>):Vector.<Hero>
 		{
 			var list:Vector.<Hero> = new Vector.<Hero>;
 			for(var i:String in heroPool)
