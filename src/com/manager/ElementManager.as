@@ -434,26 +434,34 @@ package com.manager
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
-					//踩尸体
-					if(this._attackedHero.currenthp == "0")
-					{
-						this.moveHero(this._selectedHero,this._attackedHero.__cell);
-					}
-					else
+					
+					if(this._attackedHero.__isMe)
 					{
 						//辅助
-						if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
+						if(this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1")
 						{
 							SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
 							var master:String = UserManager.getInstance().isMaster?"1":"0";
 							DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
 						}
-						//攻击
-						else if(!this._attackedHero.__isMe)
+						else if(this._attackedHero.currenthp == "0")
 						{
-							this.attack(this._selectedHero,this._attackedHero);
+							this.moveHero(this._selectedHero,this._attackedHero.__cell);
 						}
 					}
+					else
+					{
+						//踩尸体
+						if(this._attackedHero.currenthp == "0")
+						{
+							this.moveHero(this._selectedHero,this._attackedHero.__cell);
+						}
+						else
+						{
+							this.attack(this._selectedHero,this._attackedHero);
+						}						
+					}
+
 					this.removeSelectAttack();
 					this.cleardata();
 					return;
@@ -1080,7 +1088,7 @@ package com.manager
 				for(var i:String in heroStageList)
 				{
 					EffectManager.fasthideAttackEffect(heroStageList[i] as Hero);
-					heroStageList[i].clearPart();
+					heroStageList[i].clear();
 					UserManager.setProperty(heroStageList[i],DataManager.getHeroByFieldData(heroStageList[i].id,heroStageList[i].__isMe));
 					this.addHero(heroStageList[i],heroStageList[i].__cell,false);
 				}
@@ -1090,7 +1098,7 @@ package com.manager
 			{
 				if(heroStageList.indexOf(actionList[i])!=-1)continue;
 				EffectManager.fasthideAttackEffect(actionList[i]);
-				actionList[i].clearPart();
+				actionList[i].clear();
 				UserManager.setProperty(actionList[i],DataManager.getHeroByFieldData(actionList[i].id,false));
 				this.addHero(actionList[i],actionList[i].__cell,false);
 				actionList[i].updatePos(true);
