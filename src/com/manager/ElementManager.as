@@ -10,15 +10,14 @@ package com.manager
 	import event.HeroEventDispatcher;
 	
 	import flash.geom.Point;
-	import flash.media.Sound;
 	import flash.utils.Dictionary;
+	import flash.utils.setTimeout;
 	
 	import global.Global;
 	
 	import item.Cell;
 	
 	import model.DataManager;
-	import model.SoundManager;
 	
 	import starling.animation.Tween;
 	import starling.core.Starling;
@@ -30,7 +29,6 @@ package com.manager
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
 	
-	import util.MapElementEffect;
 	import util.PropEffect;
 	import util.RangUtil;
 	import util.SkillAttack;
@@ -206,8 +204,38 @@ package com.manager
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
 					HeroEventDispatcher.getInstance().dispatchEvent(evt);
 					break;
+				case Global.DATA_ACTION_ADDGAIN:
+					if(data.master == "1")
+					{
+						if(UserManager.getInstance().isMaster)
+						{
+							var hero:Hero = this.getHeroInStageById(data.id,true);
+							var toHero:Hero = this.getHeroInStageById(data.params.hid,true);
+						}
+						else
+						{
+							var hero:Hero = this.getHeroInStageById(data.id,false);
+							var toHero:Hero = this.getHeroInStageById(data.params.hid,false);
+						}
+					}
+					else
+					{
+						if(UserManager.getInstance().isMaster)
+						{
+							var hero:Hero = this.getHeroInStageById(data.id,false);
+							var toHero:Hero = this.getHeroInStageById(data.params.hid,false);
+						}
+						else
+						{
+							var hero:Hero = this.getHeroInStageById(data.id,true);
+							var toHero:Hero = this.getHeroInStageById(data.params.hid,true);
+						}
+					}
+					SkillAttack.addGainValue(hero,toHero);
+					break;
 			}
 		}
+		
 		private function getHeroByFlag(flag:String,id:String):Hero
 		{
 			var hero:Hero;
@@ -417,6 +445,8 @@ package com.manager
 						if(this._attackedHero.__isMe && (this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1"))
 						{
 							SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
+							var master:String = UserManager.getInstance().isMaster?"1":"0";
+							DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
 						}
 						//攻击
 						else if(!this._attackedHero.__isMe)
@@ -513,15 +543,16 @@ package com.manager
 						{
 							h.setDisDir();
 						}
-						if(h.toHero.add_shield =="")
+						if(h.toHero.shieldId =="")
 						{
 							SkillAttack.doAttack(h,h.toHero);
 						}
 						else
 						{
+							h.toHero.shieldId = "";
 							EffectManager.removeShieldEffect(h.toHero);
 						}
-						h.switchStat(Hero.STAND);					
+						h.switchStat(Hero.STAND);			
 					}
 					this.cleardata();
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -539,10 +570,6 @@ package com.manager
 			if(toCell === hero.__cell)
 			{
 				return;
-			}
-			if(hero.__cell && hero.__cell.__part)
-			{
-				MapElementEffect.removeMp(hero);
 			}
 			CellManager.getInstance().hideRang();
 			
@@ -563,6 +590,7 @@ package com.manager
 			heroTween.onComplete = moveComplete;
 			heroTween.onCompleteArgs = [hero,toCell];
 			Starling.juggler.add(heroTween);
+			CellManager.getInstance().disableAllCell();
 		}
 		
 		/**
@@ -598,6 +626,7 @@ package com.manager
 			}
 			(arg[0] as Hero).addTo(arg[1] as Cell);
 			(arg[0] as Hero).touchable = true;
+			CellManager.getInstance().ableAllCell();
 			
 			this.cleardata();
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
@@ -628,13 +657,17 @@ package com.manager
 			this.heroPool.push(hero);
 			if(dispatchEvent)
 			{
-				var evt:Event = new Event(Global.ACTION_DATA_STEP);
-				HeroEventDispatcher.getInstance().dispatchEvent(evt);
+				setTimeout(dispatchStep,1000);
 			}
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
-
+		
+		private function dispatchStep():void
+		{
+			var evt:Event = new Event(Global.ACTION_DATA_STEP);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
+		}
 		private  static const MOVEHELPPOINT = new Point;
 		private  static var HELPX:Number;
 		private  static var HELPY:Number;
@@ -665,6 +698,22 @@ package com.manager
 			}
 			if(touch.phase == TouchPhase.ENDED)
 			{
+				//判断双击查看
+				if(touch.tapCount ==2)
+				{
+					if(e.currentTarget is Hero)
+					{
+						PanelManager.getInstance().open(Global.PANEL_SOLDIERINFO);
+						PanelManager.getInstance().getSoldierPanel().setData(e.currentTarget as Hero);
+					}
+					if(e.currentTarget is Item)
+					{
+						PanelManager.getInstance().open(Global.PANEL_TOOLMSG);
+						PanelManager.getInstance().getToolPanel().setData(e.currentTarget as Item);
+					}
+					return;
+				}
+				
 				if(HELPX== touch.globalX && HELPY==touch.globalY)
 				{
 					e.stopPropagation();

@@ -138,5 +138,19 @@ package com.manager
 				(this._cellList[i] as Cell).alpha = 0;
 			}
 		}
+		public function disableAllCell():void
+		{
+			for(var i:String in this._cellList)
+			{
+				(this._cellList[i] as Cell).touchable = false;
+			}
+		}
+		public function ableAllCell():void
+		{
+			for(var i:String in this._cellList)
+			{
+				(this._cellList[i] as Cell).touchable = true;
+			}
+		}
 	}
 }
