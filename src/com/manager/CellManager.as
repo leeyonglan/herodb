@@ -54,6 +54,13 @@ package com.manager
 			if(touch.phase == TouchPhase.ENDED)
 			{			
 				var cell:Cell = e.currentTarget as Cell;
+				//判断双击查看
+				if(touch.tapCount ==2 && cell.__part)
+				{
+					PanelManager.getInstance().open(Global.PANEL_PARTMSG);
+					PanelManager.getInstance().getPartPanel().setData(cell.__part);
+					return;
+				}
 				var evt:Event = new Event(Global.CELL_TOUCH,false,cell);
 				HeroEventDispatcher.getInstance().dispatchEvent(evt);
 			}
