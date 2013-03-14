@@ -469,8 +469,15 @@ package com.manager
 				//判断使用道具
 				if(this._selectedItem)
 				{
-					if(!this._attackedHero.__isMe)return;
-					this.toUseTool(this._attackedHero);
+					
+					if(PropEffect.canUse(this._selectedItem,this._attackedHero))
+					{
+						this.toUseTool(this._attackedHero);
+					}
+					else
+					{
+						this.rebackToSpace(this._selectedItem);
+					}
 					return;
 				}
 				if(this._attackedHero == this._selectedHero)return;
@@ -512,7 +519,6 @@ package com.manager
 					else
 					{
 						(item as Hero).selected = false;
-						//item.switchStat(Hero.STAND);
 					}
 				}
 			}
@@ -930,6 +936,40 @@ package com.manager
 			}
 			return list;
 		}
+		
+		public function switchResultHeros(isMe:Boolean,win:Boolean):void
+		{
+			for(var i:String in this.heroPool)
+			{
+				if(this.heroPool[i].__isMe == isMe)
+				{
+					if(win)
+					{
+						this.heroPool[i].switchStat(Hero.VICTORY);
+					}
+					else
+					{
+						this.heroPool[i].switchStat(Hero.LOST);
+					}
+				}
+			}
+			
+			for(var j:int=0;j<3;j++)
+			{
+				if(spaceDict[j].content != null && ((spaceDict[j].content) as Hero).__isMe == isMe)
+				{
+					if(win)
+					{
+						((spaceDict[j].content) as Hero).switchStat(Hero.VICTORY);
+					}
+					else
+					{
+						((spaceDict[j].content) as Hero).switchStat(Hero.LOST);
+					}
+				}
+			}
+		}
+		
 		public function getHerosInStage(isMe:Boolean):Vector.<Hero>
 		{
 			var list:Vector.<Hero> = new Vector.<Hero>;
@@ -1069,10 +1109,35 @@ package com.manager
 				{
 					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
 				}
+				if(h.confid == "4_6")
+				{
+					this.resetAllVal(h.__isMe);
+				}
 				h.removeFromParent(true);
 			}
 		}
-		
+		public function getMum(isMe:Boolean):Hero
+		{
+			for(var i:String in this.heroPool)
+			{
+				if(this.heroPool[i].__isMe == isMe && this.heroPool[i].confid == "4_6")
+				{
+					return this.heroPool[i];
+					break;
+				}
+			}
+			return null;
+		}
+		public function resetAllVal(isMe:Boolean):void
+		{
+			for(var i:String in this.heroPool)
+			{
+				if(this.heroPool[i].__isMe == isMe)
+				{
+					this.heroPool[i].resetVal();
+				}
+			}
+		}
 		public function reset():void
 		{
 			this.cleardata();
