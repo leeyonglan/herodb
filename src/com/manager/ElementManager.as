@@ -201,8 +201,7 @@ package com.manager
 						var cell:Cell = CellManager.getInstance().getCellById(data.id);
 						PropEffect.useToolOnCell(cell,it);
 					}
-					var evt:Event = new Event(Global.ACTION_DATA_STEP);
-					HeroEventDispatcher.getInstance().dispatchEvent(evt);
+					setTimeout(dispatchStep,700);
 					break;
 				case Global.DATA_ACTION_ADDGAIN:
 					if(data.master == "1")
@@ -232,6 +231,7 @@ package com.manager
 						}
 					}
 					SkillAttack.addGainValue(hero,toHero);
+					setTimeout(dispatchStep,700);
 					break;
 			}
 		}
@@ -585,7 +585,7 @@ package com.manager
 			
 			if(toCell.__preid != hero.__cell.__preid)
 			{
-				this._elementLayer.addChild(hero);
+				this._elementLayer.addHero(toCell.__preid,hero);
 			}
 			if(this.needDisDir(hero,toCell))
 			{
@@ -661,11 +661,11 @@ package com.manager
 			hero.addTo(onCell);
 			hero.status = Global.HERO_STATUS_STAGE;
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
-			this._elementLayer.addChild(hero);
+			this._elementLayer.addHero(onCell.__preid,hero);
 			this.heroPool.push(hero);
 			if(dispatchEvent)
 			{
-				setTimeout(dispatchStep,1000);
+				setTimeout(dispatchStep,700);
 			}
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
