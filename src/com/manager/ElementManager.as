@@ -1092,7 +1092,19 @@ package com.manager
 		{
 			return this.heroPool;
 		}
-		
+		/**
+		 * 召唤 
+		 * @param cell
+		 * @return 
+		 * 
+		 */
+		public function createHeroOnCell(cell:Cell):void
+		{
+			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",UserManager.getInstance().isMaster);
+			hero.hid = "4_7_1";
+			hero.isMe = true;
+			this.addHero(hero,cell);
+		}
 		/**
 		 *只是清除 
 		 * @param h
