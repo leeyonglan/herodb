@@ -199,7 +199,8 @@ package com.manager
 					else
 					{
 						var cell:Cell = CellManager.getInstance().getCellById(data.id);
-						PropEffect.useToolOnCell(cell,it);
+						var master:Boolean = data.master=="1"?true:false;
+						PropEffect.useToolOnCell(cell,it,master);
 					}
 					setTimeout(dispatchStep,700);
 					break;
@@ -507,7 +508,12 @@ package com.manager
 							CellManager.getInstance().showRang(this._rangIds);
 							//attack rang
 							var cids:Vector.<int> = RangUtil.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
+							//skill rang
+							var skillRang:Vector.<int> = RangUtil.vectorToList(RangUtil.getKillRang(this._selectedHero));
+							cids = cids.concat(skillRang);
+							
 							_attackRangHero = this.getRangHero(cids);
+
 							var inx:int = _attackRangHero.indexOf(this._selectedHero); 
 							if(inx!=-1)
 							{
@@ -535,7 +541,7 @@ package com.manager
 			}
 			else
 			{
-				hero.switchStat(Hero.ATTACK);
+				hero.switchStat(SkillAttack.getAttackFlag(hero,toHero));
 			}
 			if(this.needDisDir(hero,toHero.__cell))
 			{
@@ -676,7 +682,20 @@ package com.manager
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
-		
+		/**
+		 *仅用于召唤海兽 
+		 * @param hero
+		 * @param onCell
+		 * 
+		 */
+		public function addSpicalHero(hero:Hero,onCell:Cell):void
+		{
+			hero.addTo(onCell);
+			hero.status = Global.HERO_STATUS_STAGE;
+			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
+			this._elementLayer.addHero(onCell.__preid,hero);
+			this.heroPool.push(hero);
+		}
 		private function dispatchStep():void
 		{
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -1098,12 +1117,19 @@ package com.manager
 		 * @return 
 		 * 
 		 */
-		public function createHeroOnCell(cell:Cell):void
+		public function createHeroOnCell(cell:Cell,master:Boolean):void
 		{
-			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",UserManager.getInstance().isMaster);
+			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",master);
 			hero.hid = "4_7_1";
-			hero.isMe = true;
-			this.addHero(hero,cell);
+			if(UserManager.getInstance().isMaster == master)
+			{
+				hero.isMe = true;
+			}
+			else
+			{
+				hero.isMe = false;
+			}
+			this.addSpicalHero(hero,cell);
 		}
 		/**
 		 *只是清除 
