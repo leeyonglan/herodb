@@ -493,7 +493,7 @@ package com.manager
 					if(item == e.currentTarget)
 					{
 						//if me
-						if(!(item as Hero).__isMe)
+						if(!(item as Hero).__isMe||(item as Hero).currenthp =="0")
 						{
 							return;
 						}
