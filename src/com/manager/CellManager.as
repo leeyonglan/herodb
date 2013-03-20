@@ -137,7 +137,10 @@ package com.manager
 		{
 			return new Point(cell.x + cell.width>>1,cell.y + cell.height>>1);
 		}
-		
+		public function getAllCell():Vector.<Cell>
+		{
+			return this._cellLayer.getCellList();
+		}	
 		public  function hideRang():void
 		{
 			for(var i:String in this._cellList)

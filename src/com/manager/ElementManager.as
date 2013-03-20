@@ -106,6 +106,7 @@ package com.manager
 				spaceDict[i] = {pos:new Point(this._spaceStartX+i*100,600),content:null};
 			}
 			HeroEventDispatcher.getInstance().addListener(Global.CELL_TOUCH,cellTouchHandler);
+			HeroEventDispatcher.getInstance().addListener(Global.SHIPPING_SPACE_COMPLETE,shipSpaceComplete);
 		}
 		
 		private function stageTouchHandler(e:TouchEvent):void
@@ -193,13 +194,14 @@ package com.manager
 					var it:Item = UserManager.getInstance().getUbItemById(data.params.tid);
 					if(data.params && data.params.hasOwnProperty("target") && data.params.target == "1")
 					{
-						var hero:Hero = this.getHeroByFlag(data.master,data.id);
+						var hero:Hero = this.getHeroByFlag(data.params.hmaster,data.id);
 						PropEffect.useTool(hero,it);
 					}
 					else
 					{
 						var cell:Cell = CellManager.getInstance().getCellById(data.id);
-						PropEffect.useToolOnCell(cell,it);
+						var master:Boolean = data.master=="1"?true:false;
+						PropEffect.useToolOnCell(cell,it,master);
 					}
 					setTimeout(dispatchStep,700);
 					break;
@@ -339,12 +341,16 @@ package com.manager
 			}
 			DataManager.setSave(true);
 			var id:String
+			//使用对象，1兵，2格子
 			var target:String
+			//主场兵：1 客场兵:0
+			var hmaster:String = "";
 			if(obj is Hero)
 			{
 				PropEffect.useTool(obj as Hero,this._selectedItem);
 				id = (obj as Hero).id;
 				target = "1";
+				hmaster = this.getHeroFlag(obj as Hero);
 			}
 			if(obj is Cell)
 			{
@@ -353,12 +359,24 @@ package com.manager
 				target = "2";
 			}
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
-			DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id,target:target});
+			DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id,target:target,hmaster:hmaster});
 			var index:int = getSpaceIndex(this._selectedItem);
 			spaceDict[index].content = null;
 			this._selectedItem = null;
 		}
-		
+		private function getHeroFlag(h:Hero):String
+		{
+			var flag:String = "";
+			if(UserManager.getInstance().isMaster)
+			{
+				flag = (h.__isMe)?"1":"0";
+			}
+			else
+			{
+				flag = (h.__isMe)?"0":"1";
+			}
+			return flag;
+		}
 		public function addToStage(h:Hero,cell:Cell):void
 		{
 			var index:int = this.getSpaceIndex(h);
@@ -492,7 +510,7 @@ package com.manager
 					if(item == e.currentTarget)
 					{
 						//if me
-						if(!(item as Hero).__isMe)
+						if(!(item as Hero).__isMe||(item as Hero).currenthp =="0")
 						{
 							return;
 						}
@@ -507,7 +525,12 @@ package com.manager
 							CellManager.getInstance().showRang(this._rangIds);
 							//attack rang
 							var cids:Vector.<int> = RangUtil.getRangCell(this._selectedHero.__cell,int((item as Hero).rang));
+							//skill rang
+							var skillRang:Vector.<int> = RangUtil.vectorToList(RangUtil.getKillRang(this._selectedHero));
+							cids = cids.concat(skillRang);
+							
 							_attackRangHero = this.getRangHero(cids);
+
 							var inx:int = _attackRangHero.indexOf(this._selectedHero); 
 							if(inx!=-1)
 							{
@@ -535,7 +558,7 @@ package com.manager
 			}
 			else
 			{
-				hero.switchStat(Hero.ATTACK);
+				hero.switchStat(SkillAttack.getAttackFlag(hero,toHero));
 			}
 			if(this.needDisDir(hero,toHero.__cell))
 			{
@@ -676,7 +699,20 @@ package com.manager
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
 		}
-		
+		/**
+		 *仅用于召唤海兽 
+		 * @param hero
+		 * @param onCell
+		 * 
+		 */
+		public function addSpicalHero(hero:Hero,onCell:Cell):void
+		{
+			hero.addTo(onCell);
+			hero.status = Global.HERO_STATUS_STAGE;
+			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
+			this._elementLayer.addHero(onCell.__preid,hero);
+			this.heroPool.push(hero);
+		}
 		private function dispatchStep():void
 		{
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -702,6 +738,7 @@ package com.manager
 					_selectedSpaceHero.selected = true;
 					this._selectedHero = null;
 					this._selectedItem = null;
+					EffectManager.getInstance().bornCellColor(_selectedSpaceHero);
 				}
 				if(e.currentTarget is Item)
 				{
@@ -808,6 +845,7 @@ package com.manager
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.status = Global.HERO_STATUS_SPACE;
 					h.isMe = true;
+					h.visible = false;
 					h.x = spaceDict[i].pos.x;
 					h.y = spaceDict[i].pos.y;
 					spaceDict[i].content = h;
@@ -831,10 +869,53 @@ package com.manager
 					h.addEventListener(TouchEvent.TOUCH,touchAction);
 					h.x = spaceDict[i+3].pos.x;
 					h.y = spaceDict[i+3].pos.y;
+					h.visible = false;
 					spaceDict[i+3].content = h;
 					this._elementLayer.addChild(h);
 				}
 			}
+		}
+		
+		public function shipSpaceComplete(e:Event):void
+		{
+			for(var i:int=0;i<6;i++)
+			{
+				if(spaceDict[i].content.visible == false)
+				{
+					var mc:MovieClip = Assets.getShippingSpaceEffectByKey("CharacterTransfer","CharacterTransfer");
+					mc.x = spaceDict[i].content.x;
+					mc.y = spaceDict[i].content.y;
+					mc.addEventListener(Event.COMPLETE,showShipSpaceComplete);
+					this._elementLayer.addChild(mc);
+					Starling.juggler.add(mc);
+					mc.play();
+					break;
+				}
+			}
+		}
+		
+		public function getSpaceDisByX(x:Number):DisplayObject
+		{
+			var dis:DisplayObject;
+			for(var i:int=0;i<6;i++)
+			{
+				if(spaceDict[i].content.x == x)
+				{
+					 dis = spaceDict[i].content;
+				}
+			}
+			return dis;
+		}
+		public function showShipSpaceComplete(e:Event):void
+		{
+			(e.currentTarget as MovieClip).stop();
+			var dis:DisplayObject = this.getSpaceDisByX((e.currentTarget as MovieClip).x);
+			(e.currentTarget as MovieClip).removeFromParent();
+			Starling.juggler.remove((e.currentTarget as MovieClip));
+			Assets.reBackShipSpacemc(e.currentTarget as MovieClip);
+			dis.visible = true;
+			var evt:Event = new Event(Global.SHIPPING_SPACE_COMPLETE);
+			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
 		
 		public function rebackToSpace(dis:DisplayObject):void
@@ -1098,12 +1179,19 @@ package com.manager
 		 * @return 
 		 * 
 		 */
-		public function createHeroOnCell(cell:Cell):void
+		public function createHeroOnCell(cell:Cell,master:Boolean):void
 		{
-			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",UserManager.getInstance().isMaster);
+			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",master);
 			hero.hid = "4_7_1";
-			hero.isMe = true;
-			this.addHero(hero,cell);
+			if(UserManager.getInstance().isMaster == master)
+			{
+				hero.isMe = true;
+			}
+			else
+			{
+				hero.isMe = false;
+			}
+			this.addSpicalHero(hero,cell);
 		}
 		/**
 		 *只是清除 
@@ -1115,8 +1203,8 @@ package com.manager
 			var i:int = this.heroPool.indexOf(h);
 			if(i!=-1)
 			{
-				this.heroPool.splice(i,1);
-				h.clear();
+//				this.heroPool.splice(i,1);
+//				h.clear();
 				if(h.hasEventListener(TouchEvent.TOUCH))
 				{
 					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
@@ -1190,6 +1278,7 @@ package com.manager
 			}
 			this.addHeroToSpace(spaceHeroList);
 			this.addItemToSpace(UserManager.getInstance().getToolList());
+			showAllSpaceDis();
 		}
 		
 		private function clearHeroPool():void
@@ -1242,6 +1331,17 @@ package com.manager
 				}
 			}
 			GameManager.getInstance().getHud().bottomSprite.disable();
+		}
+		/**
+		 * 
+		 * 
+		 */
+		public function showAllSpaceDis():void
+		{
+			for(var i:int=0;i<6;i++)
+			{
+				(spaceDict[i].content as DisplayObject).visible = true;
+			}
 		}
 		/**
 		 * 进入游戏前恢复一些操作
