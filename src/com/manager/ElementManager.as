@@ -589,7 +589,7 @@ package com.manager
 							h.toHero.shieldId = "";
 							EffectManager.removeShieldEffect(h.toHero);
 						}
-						h.switchStat(Hero.STAND);			
+						h.switchStat(h._stat);			
 					}
 					this.cleardata();
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
