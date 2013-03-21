@@ -354,7 +354,7 @@ package com.manager
 			}
 			if(obj is Cell)
 			{
-				PropEffect.useToolOnCell(obj as Cell,this._selectedItem);
+				PropEffect.useToolOnCell(obj as Cell,this._selectedItem,UserManager.getInstance().isMaster);
 				id = String((obj as Cell).__id);
 				target = "2";
 			}
@@ -458,9 +458,12 @@ package com.manager
 						//辅助
 						if(this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1")
 						{
-							SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
-							var master:String = UserManager.getInstance().isMaster?"1":"0";
-							DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
+							if(!(this._selectedHero.add_hp == "1" && this._attackedHero.isEnergy))
+							{
+								SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
+								var master:String = UserManager.getInstance().isMaster?"1":"0";
+								DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
+							}
 						}
 						else if(this._attackedHero.currenthp == "0")
 						{
@@ -552,6 +555,12 @@ package com.manager
 			hero.selected = false;
 			hero.toHero = toHero;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
+			var hurt:Number = SkillAttack.doAttackNumericalValue(hero,toHero);
+			if(hurt>=Number(toHero.currenthp))
+			{
+				hero.slowdown();
+				toHero.slowdown();
+			}
 			if(PropEffect.hasSuperKill(hero._equip))
 			{
 				hero.switchStat(Hero.FINALATTACK);
@@ -589,7 +598,7 @@ package com.manager
 							h.toHero.shieldId = "";
 							EffectManager.removeShieldEffect(h.toHero);
 						}
-						h.switchStat(h._stat);			
+						h.switchStat(h.getStatus());
 					}
 					this.cleardata();
 					var evt:Event = new Event(Global.ACTION_DATA_STEP);
@@ -880,11 +889,11 @@ package com.manager
 		{
 			for(var i:int=0;i<6;i++)
 			{
-				if(spaceDict[i].content.visible == false)
+				if(spaceDict[i].content && spaceDict[i].content.visible == false)
 				{
 					var mc:MovieClip = Assets.getShippingSpaceEffectByKey("CharacterTransfer","CharacterTransfer");
-					mc.x = spaceDict[i].content.x;
-					mc.y = spaceDict[i].content.y;
+					mc.x = spaceDict[i].pos.x;
+					mc.y = spaceDict[i].pos.y;
 					mc.addEventListener(Event.COMPLETE,showShipSpaceComplete);
 					this._elementLayer.addChild(mc);
 					Starling.juggler.add(mc);
@@ -899,7 +908,7 @@ package com.manager
 			var dis:DisplayObject;
 			for(var i:int=0;i<6;i++)
 			{
-				if(spaceDict[i].content.x == x)
+				if(spaceDict[i].pos.x == x)
 				{
 					 dis = spaceDict[i].content;
 				}
@@ -1213,7 +1222,7 @@ package com.manager
 				{
 					this.resetAllVal(h.__isMe);
 				}
-				h.removeFromParent(true);
+				h.removeFromParent(false);
 			}
 		}
 		public function getMum(isMe:Boolean):Hero
@@ -1340,7 +1349,10 @@ package com.manager
 		{
 			for(var i:int=0;i<6;i++)
 			{
-				(spaceDict[i].content as DisplayObject).visible = true;
+				if(spaceDict[i].content)
+				{
+					(spaceDict[i].content as DisplayObject).visible = true;
+				}
 			}
 		}
 		/**
