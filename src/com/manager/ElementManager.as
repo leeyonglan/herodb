@@ -978,6 +978,7 @@ package com.manager
 				if(spaceDict[i].content == sp)
 				{
 					index = i;
+					break;
 				}
 			}
 			return index;
