@@ -78,6 +78,7 @@ package com.manager
 			{
 				this._selectedHero.selected = false;
 				this._selectedHero = null;
+				removeSelectAttack();
 			}
 			if(_attackedHero)
 			{
@@ -555,12 +556,7 @@ package com.manager
 			hero.selected = false;
 			hero.toHero = toHero;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
-			var hurt:Number = SkillAttack.doAttackNumericalValue(hero,toHero);
-			if(hurt>=Number(toHero.currenthp))
-			{
-				hero.slowdown();
-				toHero.slowdown();
-			}
+			
 			if(PropEffect.hasSuperKill(hero._equip))
 			{
 				hero.switchStat(Hero.FINALATTACK);
@@ -696,10 +692,13 @@ package com.manager
 		}
 		public function addHero(hero:Hero,onCell:Cell,dispatchEvent:Boolean = true):void
 		{
-			hero.addTo(onCell);
-			hero.status = Global.HERO_STATUS_STAGE;
-			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
-			this._elementLayer.addHero(onCell.__preid,hero);
+			if(hero.__status != Global.HERO_STATUS_REMOED)
+			{
+				hero.addTo(onCell);
+				hero.status = Global.HERO_STATUS_STAGE;
+				hero.addEventListener(TouchEvent.TOUCH,touchHandler);
+				this._elementLayer.addHero(onCell.__preid,hero);
+			}
 			this.heroPool.push(hero);
 			if(dispatchEvent)
 			{
@@ -786,6 +785,7 @@ package com.manager
 						if(c == null)return;
 						var evt:Event = new Event(Global.CELL_TOUCH,false,c);
 						HeroEventDispatcher.getInstance().dispatchEvent(evt);
+						
 					}
 					if(e.currentTarget is Item)
 					{
@@ -1136,6 +1136,11 @@ package com.manager
 					toHero.switchStat(Hero.ENERGY_HURT);
 				}
 			}
+			var hurt:Number = SkillAttack.doAttackNumericalValue(hero,toHero);
+			if(hurt>=Number(toHero.currenthp))
+			{
+				this.slowDownAll();
+			}
 			dis.visible = false;
 			(dis as MovieClip).stop();
 			this._elementLayer.removeChild(dis,true);
@@ -1212,8 +1217,6 @@ package com.manager
 			var i:int = this.heroPool.indexOf(h);
 			if(i!=-1)
 			{
-//				this.heroPool.splice(i,1);
-//				h.clear();
 				if(h.hasEventListener(TouchEvent.TOUCH))
 				{
 					h.removeEventListener(TouchEvent.TOUCH,touchHandler);
@@ -1221,6 +1224,10 @@ package com.manager
 				if(h.confid == "4_6")
 				{
 					this.resetAllVal(h.__isMe);
+				}
+				if(!DataManager.save)
+				{
+					h.status = Global.HERO_STATUS_REMOED;
 				}
 				h.removeFromParent(false);
 			}
@@ -1362,6 +1369,20 @@ package com.manager
 		public function ableAll():void
 		{
 			GameManager.getInstance().getHud().bottomSprite.able();
+		}
+		public function slowDownAll():void
+		{
+			for(var i:String in this.heroPool)
+			{
+				this.heroPool[i].slowdown();
+			}
+		}
+		public function normalAll():void
+		{
+			for(var i:String in this.heroPool)
+			{
+				this.heroPool[i].normal();
+			}			
 		}
 	}
 }
