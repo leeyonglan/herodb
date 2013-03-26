@@ -196,7 +196,8 @@ package com.manager
 					if(data.params && data.params.hasOwnProperty("target") && data.params.target == "1")
 					{
 						var hero:Hero = this.getHeroByFlag(data.params.hmaster,data.id);
-						PropEffect.useTool(hero,it);
+						var master:Boolean = data.master=="1"?true:false;
+						PropEffect.useTool(hero,it,master);
 					}
 					else
 					{
@@ -348,7 +349,7 @@ package com.manager
 			var hmaster:String = "";
 			if(obj is Hero)
 			{
-				PropEffect.useTool(obj as Hero,this._selectedItem);
+				PropEffect.useTool(obj as Hero,this._selectedItem,UserManager.getInstance().isMaster);
 				id = (obj as Hero).id;
 				target = "1";
 				hmaster = this.getHeroFlag(obj as Hero);
@@ -568,6 +569,7 @@ package com.manager
 			if(PropEffect.hasSuperKill(hero._equip))
 			{
 				hero.switchStat(Hero.FINALATTACK);
+				EffectManager.processSuperSkillEffect(hero,toHero);
 			}
 			else
 			{
@@ -1094,60 +1096,7 @@ package com.manager
 			return true;
 		}
 		
-		public function showAttackItem(display:DisplayObject,hero:Hero,toHero:Hero):void
-		{
-			var mx:Number = toHero.x - hero.x;
-			var my:Number = toHero.y - hero.y;
-			var des:Number = Math.atan2(my,mx);
-			display.pivotX = display.width>>1;
-			display.pivotY = display.height>>1;
-			display.rotation = des;
-			display.x = hero.x;
-			display.y = hero.y;
-			
-			var tween:Tween = new Tween(display,.2);
-			tween.animate("x",toHero.x);
-			tween.animate("y",toHero.y);
-			tween.onComplete = attckComplete;
-			tween.onCompleteArgs = [display,hero,toHero];
-			this._elementLayer.addChild(display);
-			(display as MovieClip).play();
-			Starling.juggler.add(tween);
-		}
-		private function attckComplete(...arg):void
-		{
-			var dis:DisplayObject = arg[0];
-			var hero:Hero = arg[1];
-			var toHero:Hero = arg[2];
-			var stat:String;
-			if(hero.atharmanimate == "1")
-			{
-				stat = Hero.HURT;
-			}
-			else
-			{
-				stat = Hero.ENERGY_HURT;
-			}
-			var hurt:Number = SkillAttack.doAttackNumericalValue(hero,toHero);
-			if(hurt>=Number(toHero.currenthp))
-			{
-				this.slowDownAll();
-				stat = Hero.DOWN;
-			}
-			if((hero._stat == Hero.ATTACK ||hero._prestat == Hero.ATTACK) && hero.atobjeffect == "1")
-			{
-				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_COMMON_ATTACKEFFECT);
-			}
-			if((hero._stat == Hero.FINALATTACK || hero._prestat == Hero.FINALATTACK) && hero.finalobjeffect == "1")
-			{
-				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_FINAL_ATTACKEFFECT);
-			}
-			this.showAttackEffect(mc,toHero);
-			toHero.switchStat(stat);
-			dis.visible = false;
-			(dis as MovieClip).stop();
-			this._elementLayer.removeChild(dis,true);
-		}
+
 		public function showAttackEffect(mc:MovieClip,hero:Hero):void
 		{
 			mc.pivotX = mc.width>>1;
