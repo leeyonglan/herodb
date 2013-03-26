@@ -662,7 +662,7 @@ package com.manager
 		private function moveComplete(...arg):void
 		{
 			this.heroTween = null;
-			(arg[0] as Hero).switchStat(Hero.STAND);
+			(arg[0] as Hero).switchStat((arg[0] as Hero).getStatus());
 			if(this.needDisDir(arg[0],arg[1]))
 			{
 				(arg[0] as Hero).setDisDir();
@@ -1119,37 +1119,31 @@ package com.manager
 			var dis:DisplayObject = arg[0];
 			var hero:Hero = arg[1];
 			var toHero:Hero = arg[2];
-			if((hero._stat == Hero.ATTACK ||hero._prestat == Hero.ATTACK) && hero.atobjeffect == "1")
+			var stat:String;
+			if(hero.atharmanimate == "1")
 			{
-				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_COMMON_ATTACKEFFECT);
-				this.showAttackEffect(mc,toHero);
-				if(hero.atharmanimate == "1")
-				{
-					toHero.switchStat(Hero.HURT);
-				}
-				else
-				{
-					toHero.switchStat(Hero.ENERGY_HURT);
-				}
+				stat = Hero.HURT;
 			}
-			if((hero._stat == Hero.FINALATTACK || hero._prestat == Hero.FINALATTACK) && hero.finalobjeffect == "1")
+			else
 			{
-				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_FINAL_ATTACKEFFECT);
-				this.showAttackEffect(mc,toHero);
-				if(hero.atharmanimate == "1")
-				{
-					toHero.switchStat(Hero.HURT);
-				}
-				else
-				{
-					toHero.switchStat(Hero.ENERGY_HURT);
-				}
+				stat = Hero.ENERGY_HURT;
 			}
 			var hurt:Number = SkillAttack.doAttackNumericalValue(hero,toHero);
 			if(hurt>=Number(toHero.currenthp))
 			{
 				this.slowDownAll();
+				stat = Hero.DOWN;
 			}
+			if((hero._stat == Hero.ATTACK ||hero._prestat == Hero.ATTACK) && hero.atobjeffect == "1")
+			{
+				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_COMMON_ATTACKEFFECT);
+			}
+			if((hero._stat == Hero.FINALATTACK || hero._prestat == Hero.FINALATTACK) && hero.finalobjeffect == "1")
+			{
+				var mc:MovieClip = Assets.getHeroEffectByKey(hero.confid,Global.HERO_FINAL_ATTACKEFFECT);
+			}
+			this.showAttackEffect(mc,toHero);
+			toHero.switchStat(stat);
 			dis.visible = false;
 			(dis as MovieClip).stop();
 			this._elementLayer.removeChild(dis,true);
