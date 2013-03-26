@@ -466,22 +466,30 @@ package com.manager
 								DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
 							}
 						}
-						else if(this._attackedHero.currenthp == "0")
+						else
 						{
-							this.moveHero(this._selectedHero,this._attackedHero.__cell);
+							var flag:String = SkillAttack.getAttackDeadFlag(this._selectedHero,this._attackedHero);
+							if(flag == Global.DEAD_ATTACK_TYPE)
+							{
+								this.attack(this._selectedHero,this._attackedHero);
+							}
+							else
+							{
+								this.moveHero(this._selectedHero,this._attackedHero.__cell);
+							}
 						}
 					}
 					else
 					{
-						//踩尸体
-						if(this._attackedHero.currenthp == "0")
+						var flag:String = SkillAttack.getAttackDeadFlag(this._selectedHero,this._attackedHero);
+						if(flag == Global.DEAD_ATTACK_TYPE)
 						{
-							this.moveHero(this._selectedHero,this._attackedHero.__cell);
+							this.attack(this._selectedHero,this._attackedHero);
 						}
 						else
 						{
-							this.attack(this._selectedHero,this._attackedHero);
-						}						
+							this.moveHero(this._selectedHero,this._attackedHero.__cell);
+						}					
 					}
 
 					this.removeSelectAttack();

@@ -129,13 +129,18 @@ package com.manager
 			TranslatePoint.y = cell.y + (cell.height>>1);
 			return ToolUtil.translate(TranslatePoint,cell.parent,hero);
 		}
+		private static var  HELPPOINT:Point = new Point;
 		public static function getPartPosOncell(display:DisplayObject,cell:Cell):Point
 		{
-			return new Point((cell.x + cell.width - display.width/2),(cell.y + cell.height - display.height/2));
+			HELPPOINT.x = (cell.x + cell.width - display.width/2);
+			HELPPOINT.y = (cell.y + cell.height - display.height/2);
+			return HELPPOINT;
 		}
 		public static function getCellMiddle(cell:Cell):Point
 		{
-			return new Point(cell.x + cell.width>>1,cell.y + cell.height>>1);
+			HELPPOINT.x = cell.x + (cell.width>>1);
+			HELPPOINT.y = cell.y + (cell.height>>1);
+			return HELPPOINT;
 		}
 		public function getAllCell():Vector.<Cell>
 		{
