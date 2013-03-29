@@ -283,7 +283,7 @@ package com.manager
 			var touchCell:Cell = e.data as Cell;
 			if(this._selectedHero)
 			{
-				if(this._rangIds.indexOf(touchCell.__id) != -1 && isEmpty(touchCell.__id))
+				if(this._rangIds.indexOf(touchCell.__id) != -1 && isEmpty(touchCell.__id) && !touchCell.isOptBorn())
 				{
 					if(this._selectedHero.__selected)
 					{
@@ -474,7 +474,7 @@ package com.manager
 							{
 								this.attack(this._selectedHero,this._attackedHero);
 							}
-							else
+							else if(flag!=null)
 							{
 								this.moveHero(this._selectedHero,this._attackedHero.__cell);
 							}
@@ -1031,6 +1031,20 @@ package com.manager
 			for(var i:String in heroPool)
 			{
 				if(idss.indexOf((heroPool[i] as Hero).__cell.__id)!=-1 && (heroPool[i] as Hero).__isMe == isme)
+				{
+					list.push(heroPool[i]);
+				}
+			}
+			return list;
+		}
+		public function getHeros(ids:Vector.<Vector.<int>>,master:Boolean):Vector.<Hero>
+		{
+			var list:Vector.<Hero> = new Vector.<Hero>;
+			var idss:Vector.<int> = RangUtil.vectorToList(ids);
+			var dir:String = master?"R":"L";
+			for(var i:String in heroPool)
+			{
+				if(idss.indexOf((heroPool[i] as Hero).__cell.__id)!=-1 && (heroPool[i] as Hero).__direct == dir)
 				{
 					list.push(heroPool[i]);
 				}
