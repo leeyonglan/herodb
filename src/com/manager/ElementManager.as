@@ -354,12 +354,13 @@ package com.manager
 				target = "1";
 				hmaster = this.getHeroFlag(obj as Hero);
 			}
-			if(obj is Cell)
+			if(obj is Cell && this._selectedItem.ground == "1")
 			{
 				PropEffect.useToolOnCell(obj as Cell,this._selectedItem,UserManager.getInstance().isMaster);
 				id = String((obj as Cell).__id);
 				target = "2";
 			}
+			if(!target)return;
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_TOOL,id,Global.DATA_ACTION_USETOOL,master,{tid:this._selectedItem.id,target:target,hmaster:hmaster});
 			var index:int = getSpaceIndex(this._selectedItem);
@@ -399,6 +400,7 @@ package com.manager
 		{
 			this.heroTweenUp = null;
 			(arg[0] as Hero).removeEventListener(TouchEvent.TOUCH,touchAction);
+			checkDeadHeroOnCell(arg[0] as Hero,arg[1] as Cell);
 			this.addHero(arg[0],arg[1]);
 		}
 		private function getTouchedHero(t:Touch):Hero
@@ -500,7 +502,6 @@ package com.manager
 				//判断使用道具
 				if(this._selectedItem)
 				{
-					
 					if(PropEffect.canUse(this._selectedItem,this._attackedHero))
 					{
 						this.toUseTool(this._attackedHero);
@@ -595,15 +596,7 @@ package com.manager
 						{
 							h.setDisDir();
 						}
-						if(h.toHero.shieldId =="")
-						{
-							SkillAttack.doAttack(h,h.toHero);
-						}
-						else
-						{
-							h.toHero.shieldId = "";
-							EffectManager.removeShieldEffect(h.toHero);
-						}
+						SkillAttack.doAttack(h,h.toHero);
 						h.switchStat(h.getStatus());
 					}
 					this.cleardata();
@@ -623,6 +616,7 @@ package com.manager
 			{
 				return;
 			}
+			CellManager.getInstance().disableAllCell();
 			CellManager.getInstance().hideRang();
 			
 			var toPos:Point = CellManager.getHeroPosOncell(hero,toCell);
@@ -642,7 +636,6 @@ package com.manager
 			heroTween.onComplete = moveComplete;
 			heroTween.onCompleteArgs = [hero,toCell];
 			Starling.juggler.add(heroTween);
-			CellManager.getInstance().disableAllCell();
 		}
 		
 		/**
@@ -669,16 +662,11 @@ package com.manager
 			{
 				(arg[0] as Hero).setDisDir();
 			}
-			//踩尸体
-			var deadHero:Hero = this.getHeroByCellId((arg[1] as Cell).__id);
-			if(deadHero)
-			{
-				this.removeHero(deadHero);
-				SkillAttack.processStepOnDead(arg[0],deadHero);
-			}
+			this.checkDeadHeroOnCell((arg[0] as Hero),(arg[1] as Cell));
 			(arg[0] as Hero).addTo(arg[1] as Cell);
 			(arg[0] as Hero).touchable = true;
 			CellManager.getInstance().ableAllCell();
+			
 			
 			this.cleardata();
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
@@ -687,19 +675,35 @@ package com.manager
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
-		
+		/**
+		 * 检测格子并踩尸体 
+		 * @param hero
+		 * @param cell
+		 * 
+		 */
+		private function checkDeadHeroOnCell(hero:Hero,cell:Cell):void
+		{
+			//踩尸体
+			var deadHero:Hero = this.getHeroByCellId(cell.__id);
+			if(deadHero)
+			{
+				this.removeHero(deadHero);
+				SkillAttack.processStepOnDead(hero,deadHero);
+			}
+		}
 		private function getHeroByCellId(id:int):Hero
 		{
 			var h:Hero
 			for(var i:String in this.heroPool)
 			{
-				if(this.heroPool[i].__cell.__id == id)
+				if(this.heroPool[i].__cell && this.heroPool[i].__cell.__id == id)
 				{
 					h = this.heroPool[i];
 				}
 			}
 			return h;
 		}
+		
 		public function addHero(hero:Hero,onCell:Cell,dispatchEvent:Boolean = true):void
 		{
 			if(hero.__status != Global.HERO_STATUS_REMOED)
@@ -932,7 +936,10 @@ package com.manager
 			(e.currentTarget as MovieClip).removeFromParent();
 			Starling.juggler.remove((e.currentTarget as MovieClip));
 			Assets.reBackShipSpacemc(e.currentTarget as MovieClip);
-			dis.visible = true;
+			if(dis)
+			{
+				dis.visible = true;
+			}
 			var evt:Event = new Event(Global.SHIPPING_SPACE_COMPLETE);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
 		}
@@ -1194,8 +1201,15 @@ package com.manager
 				if(!DataManager.save)
 				{
 					h.status = Global.HERO_STATUS_REMOED;
+					h.visible = false;
 				}
+				else
+				{
+					h.status = Global.HERO_STATUS_DEAD;
+				}
+//				h.clear();
 				h.removeFromParent(false);
+				this._elementLayer.removeChild(h);
 			}
 		}
 		public function getMum(isMe:Boolean):Hero

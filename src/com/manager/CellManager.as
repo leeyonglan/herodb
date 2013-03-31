@@ -115,10 +115,12 @@ package com.manager
 			if(h.co == 1)
 			{
 				x = x+Number(h.xpos);
+				y = y+Number(h.ypos);
 			}
 			if(h.co == -1)
 			{
-				//x = x-Number(h.xpos);
+				x = x+Number(h.xpos);
+				y = y+Number(h.ypos);
 			}
 			return new Point(x,y);
 		}
