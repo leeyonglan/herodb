@@ -448,7 +448,6 @@ package com.manager
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
-				
 				//判断攻击、友军加血等
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
 					&& this._attackRangHero!=null 
@@ -509,6 +508,7 @@ package com.manager
 					else
 					{
 						this.rebackToSpace(this._selectedItem);
+						this._selectedItem = null;
 					}
 					return;
 				}
@@ -530,6 +530,10 @@ package com.manager
 						}
 						else
 						{
+							if(this._selectedHero == item)
+							{
+								return;
+							}
 							this._selectedHero = item;
 							this._selectedSpaceHero = null;
 							(item as Hero).switchStat(Hero.ACTIVATE);
@@ -730,6 +734,7 @@ package com.manager
 		public function addSpicalHero(hero:Hero,onCell:Cell):void
 		{
 			hero.addTo(onCell);
+			hero.switchStat(Hero.BORN);
 			hero.status = Global.HERO_STATUS_STAGE;
 			hero.addEventListener(TouchEvent.TOUCH,touchHandler);
 			this._elementLayer.addHero(onCell.__preid,hero);
@@ -739,6 +744,27 @@ package com.manager
 		{
 			var evt:Event = new Event(Global.ACTION_DATA_STEP);
 			HeroEventDispatcher.getInstance().dispatchEvent(evt);
+		}
+		private function checkTheSameOne(one:DisplayObject,two:DisplayObject):Boolean
+		{
+			if(one == two) 
+			{
+				return true;
+			}
+			return false;
+		}
+		private function resetSpaceDis():void
+		{
+			if(_selectedSpaceHero)
+			{
+				this._selectedSpaceHero.selected = false;
+				this._selectedSpaceHero = null;
+			}
+			if(this._selectedItem)
+			{
+				this._selectedItem.selected = false;
+				this._selectedItem = null;
+			}
 		}
 		private  static const MOVEHELPPOINT = new Point;
 		private  static var HELPX:Number;
@@ -750,9 +776,31 @@ package com.manager
 			
 			if(touch.phase == TouchPhase.BEGAN)
 			{
+				//判断双击查看
+				if(touch.tapCount ==2)
+				{
+					if(e.currentTarget is Hero)
+					{
+						PanelManager.getInstance().open(Global.PANEL_SOLDIERINFO);
+						PanelManager.getInstance().getSoldierPanel().setData(e.currentTarget as Hero);
+					}
+					if(e.currentTarget is Item)
+					{
+						PanelManager.getInstance().open(Global.PANEL_TOOLMSG);
+						PanelManager.getInstance().getToolPanel().setData(e.currentTarget as Item);
+					}
+					return;
+				}
 				HELPX = touch.globalX;
 				HELPY = touch.globalY;
 				this.cleardata();
+				
+				if(this.checkTheSameOne(this._selectedSpaceHero,e.currentTarget as DisplayObject))
+				{
+					e.stopImmediatePropagation();
+					resetSpaceDis();
+					return;
+				}
 				switchSpaceStatus();
 				if(e.currentTarget is Hero)
 				{
@@ -771,21 +819,6 @@ package com.manager
 			}
 			if(touch.phase == TouchPhase.ENDED)
 			{
-				//判断双击查看
-				if(touch.tapCount ==2)
-				{
-					if(e.currentTarget is Hero)
-					{
-						PanelManager.getInstance().open(Global.PANEL_SOLDIERINFO);
-						PanelManager.getInstance().getSoldierPanel().setData(e.currentTarget as Hero);
-					}
-					if(e.currentTarget is Item)
-					{
-						PanelManager.getInstance().open(Global.PANEL_TOOLMSG);
-						PanelManager.getInstance().getToolPanel().setData(e.currentTarget as Item);
-					}
-					return;
-				}
 				
 				if(HELPX== touch.globalX && HELPY==touch.globalY)
 				{
