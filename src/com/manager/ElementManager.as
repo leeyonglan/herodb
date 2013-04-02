@@ -417,6 +417,18 @@ package com.manager
 			}
 			return h;
 		}
+		private function checkHeroRang(list:Vector.<Hero>,h:Hero):Boolean
+		{
+			if(list == null)return false;
+			if(list.indexOf(h)!=-1)return true;
+			return false;
+		}
+		private function checkMoveRang(list:Vector.<int>,id:int):Boolean
+		{
+			if(list == null)return false;
+			if(list.indexOf(id)!=-1)return true;
+			return false;			
+		}
 		/**
 		 *	 
 		 * @param e
@@ -448,10 +460,9 @@ package com.manager
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
+				if(this._selectedHero == this._attackedHero)return;
 				//判断攻击、友军加血等
-				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe 
-					&& this._attackRangHero!=null 
-					&& this._attackRangHero.indexOf(this._attackedHero)!=-1)
+				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe)
 				{
 					if(!DataManager.canOpt())return;
 					DataManager.setSave(true);
@@ -459,7 +470,7 @@ package com.manager
 					if(this._attackedHero.__isMe)
 					{
 						//辅助
-						if(this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1")
+						if((this._selectedHero.add_hp == "1" || this._selectedHero.add_shield == "1") && this.checkHeroRang(this._attackRangHero,this._attackedHero))
 						{
 							if(!(this._selectedHero.add_hp == "1" && this._attackedHero.isEnergy))
 							{
@@ -471,11 +482,11 @@ package com.manager
 						else
 						{
 							var flag:String = SkillAttack.getAttackDeadFlag(this._selectedHero,this._attackedHero);
-							if(flag == Global.DEAD_ATTACK_TYPE)
+							if(flag == Global.DEAD_ATTACK_TYPE && this.checkHeroRang(this._attackRangHero,this._attackedHero))
 							{
 								this.attack(this._selectedHero,this._attackedHero);
 							}
-							else if(flag!=null)
+							else if(flag!=null && checkMoveRang(this._rangIds,this._attackedHero.__cell.__id))
 							{
 								this.moveHero(this._selectedHero,this._attackedHero.__cell);
 							}
@@ -484,11 +495,11 @@ package com.manager
 					else
 					{
 						var flag:String = SkillAttack.getAttackDeadFlag(this._selectedHero,this._attackedHero);
-						if(flag == Global.DEAD_ATTACK_TYPE)
+						if(flag == Global.DEAD_ATTACK_TYPE && this.checkHeroRang(this._attackRangHero,this._attackedHero))
 						{
 							this.attack(this._selectedHero,this._attackedHero);
 						}
-						else
+						else if(flag == Global.DEAD_STEPON_TYPE && this.checkMoveRang(this._rangIds,this._attackedHero.__cell.__id))
 						{
 							this.moveHero(this._selectedHero,this._attackedHero.__cell);
 						}					
