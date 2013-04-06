@@ -59,6 +59,7 @@ package com.manager
 		private var heroTween:Tween;
 		private var heroTweenUp:Tween;
 		private static const HELPER_POINT:Point = new Point();
+		private static const STEP_TIME:Number = 1000;
 		public function ElementManager()
 		{
 			
@@ -147,7 +148,6 @@ package com.manager
 				}
 			}
 		}
-		
 		public function actionStep(data:Object):void
 		{
 			switch(data.action)
@@ -205,7 +205,7 @@ package com.manager
 						var master:Boolean = data.master=="1"?true:false;
 						PropEffect.useToolOnCell(cell,it,master);
 					}
-					setTimeout(dispatchStep,700);
+					setTimeout(dispatchStep,STEP_TIME);
 					break;
 				case Global.DATA_ACTION_ADDGAIN:
 					if(data.master == "1")
@@ -235,7 +235,7 @@ package com.manager
 						}
 					}
 					SkillAttack.addGainValue(hero,toHero);
-					setTimeout(dispatchStep,700);
+					setTimeout(dispatchStep,STEP_TIME);
 					break;
 			}
 		}
@@ -300,7 +300,7 @@ package com.manager
 			if(this._selectedSpaceHero)
 			{
 				if(((UserManager.getInstance().isMaster && touchCell.__backid == 1) || (!UserManager.getInstance().isMaster && touchCell.__backid == 9))
-					&& touchCell.__part && touchCell.__part.isborn)
+					&& touchCell.__part && touchCell.__part.isborn && isEmpty(touchCell.__id))
 				{
 					DataManager.setSave(true);
 					this.addToStage(this._selectedSpaceHero,touchCell);
@@ -460,6 +460,21 @@ package com.manager
 					PanelManager.getInstance().getSoldierPanel().setData(this._attackedHero);
 					return;
 				}
+				//判断使用道具
+				if(this._selectedItem)
+				{
+					if(PropEffect.canUse(this._selectedItem,this._attackedHero))
+					{
+						this.toUseTool(this._attackedHero);
+					}
+					else
+					{
+						this.rebackToSpace(this._selectedItem);
+						this._selectedItem = null;
+					}
+					this.cleardata();
+					return;
+				}
 				if(this._selectedHero == this._attackedHero)return;
 				//判断攻击、友军加血等
 				if(this._selectedHero && this._selectedHero.__selected && this._selectedHero.__isMe)
@@ -509,21 +524,6 @@ package com.manager
 					this.cleardata();
 					return;
 				}
-				//判断使用道具
-				if(this._selectedItem)
-				{
-					if(PropEffect.canUse(this._selectedItem,this._attackedHero))
-					{
-						this.toUseTool(this._attackedHero);
-					}
-					else
-					{
-						this.rebackToSpace(this._selectedItem);
-						this._selectedItem = null;
-					}
-					return;
-				}
-				if(this._attackedHero == this._selectedHero)return;
 				this.cleardata();
 			}
 			if(touch.phase == TouchPhase.BEGAN && !this._selectedHero)
@@ -731,7 +731,7 @@ package com.manager
 			this.heroPool.push(hero);
 			if(dispatchEvent)
 			{
-				setTimeout(dispatchStep,700);
+				setTimeout(dispatchStep,STEP_TIME);
 			}
 			var master:String = UserManager.getInstance().isMaster?"1":"0";
 			DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,hero.id,Global.DATA_ACTION_ADD,master,{cid:onCell.__id});
@@ -839,6 +839,7 @@ package com.manager
 				{
 					if(e.currentTarget is Hero)
 					{
+						this._selectedSpaceHero = e.currentTarget as Hero;
 						var c:Cell = CellManager.getInstance().getTouchedCell(touch);
 						if(c == null)return;
 						var evt:Event = new Event(Global.CELL_TOUCH,false,c);
@@ -847,6 +848,7 @@ package com.manager
 					}
 					if(e.currentTarget is Item)
 					{
+						this._selectedItem = e.currentTarget as Item;
 						this.touchHandler(e);
 					}
 				}
@@ -1168,7 +1170,7 @@ package com.manager
 			mc.pivotY = mc.height>>1;
 			mc.x = hero.x;
 			mc.y = hero.y;
-			mc.fps = 24;
+			mc.fps = 24*hero.timeScale;
 			mc.addEventListener(Event.COMPLETE,effectComplete);
 			this._elementLayer.addChild(mc);
 			Starling.juggler.add(mc);
