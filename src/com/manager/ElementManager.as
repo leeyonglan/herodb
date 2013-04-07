@@ -711,7 +711,9 @@ package com.manager
 			var h:Hero
 			for(var i:String in this.heroPool)
 			{
-				if(this.heroPool[i].__cell && this.heroPool[i].__cell.__id == id)
+				if(this.heroPool[i].__cell && this.heroPool[i].__cell.__id == id
+				&& (this.heroPool[i].__status == Global.HERO_STATUS_REMOED||
+				   this.heroPool[i].__status == Global.HERO_STATUS_DEAD))
 				{
 					h = this.heroPool[i];
 				}
@@ -1253,9 +1255,10 @@ package com.manager
 				{
 					h.status = Global.HERO_STATUS_DEAD;
 				}
-//				h.clear();
-				h.removeFromParent(false);
 				this._elementLayer.removeChild(h);
+				h.clear();
+				h.removeFromParent(false);
+				
 			}
 		}
 		public function getMum(isMe:Boolean):Hero
