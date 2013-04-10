@@ -4,6 +4,7 @@ package com.manager
 	import com.gameElements.Hero;
 	import com.gameElements.Item;
 	import com.ui.BottomSprite;
+	import model.SoundManager;
 	
 	import dragonBones.events.AnimationEvent;
 	
@@ -712,8 +713,8 @@ package com.manager
 			for(var i:String in this.heroPool)
 			{
 				if(this.heroPool[i].__cell && this.heroPool[i].__cell.__id == id
-				&& (this.heroPool[i].__status == Global.HERO_STATUS_REMOED||
-				   this.heroPool[i].__status == Global.HERO_STATUS_DEAD))
+				&& this.heroPool[i].__status != Global.HERO_STATUS_REMOED &&
+				   this.heroPool[i].__status != Global.HERO_STATUS_DEAD)
 				{
 					h = this.heroPool[i];
 				}
@@ -921,6 +922,7 @@ package com.manager
 					h.y = spaceDict[i].pos.y;
 					spaceDict[i].content = h;
 					this._elementLayer.addChild(h);
+					SoundManager.getInstance().playEffectSound("transmission");
 				}
 			}
 		}
@@ -943,6 +945,7 @@ package com.manager
 					h.visible = false;
 					spaceDict[i+3].content = h;
 					this._elementLayer.addChild(h);
+					SoundManager.getInstance().playEffectSound("transmission");
 				}
 			}
 		}
