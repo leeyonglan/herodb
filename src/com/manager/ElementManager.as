@@ -922,7 +922,7 @@ package com.manager
 					h.y = spaceDict[i].pos.y;
 					spaceDict[i].content = h;
 					this._elementLayer.addChild(h);
-					SoundManager.getInstance().playEffectSound("transmission");
+//					SoundManager.getInstance().playEffectSound("transmission");
 				}
 			}
 		}
@@ -945,7 +945,7 @@ package com.manager
 					h.visible = false;
 					spaceDict[i+3].content = h;
 					this._elementLayer.addChild(h);
-					SoundManager.getInstance().playEffectSound("transmission");
+//					SoundManager.getInstance().playEffectSound("transmission");
 				}
 			}
 		}
