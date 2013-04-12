@@ -4,7 +4,6 @@ package com.manager
 	import com.gameElements.Hero;
 	import com.gameElements.Item;
 	import com.ui.BottomSprite;
-	import model.SoundManager;
 	
 	import dragonBones.events.AnimationEvent;
 	
@@ -19,6 +18,7 @@ package com.manager
 	import item.Cell;
 	
 	import model.DataManager;
+	import model.SoundManager;
 	
 	import starling.animation.Tween;
 	import starling.core.Starling;
@@ -33,6 +33,7 @@ package com.manager
 	import util.PropEffect;
 	import util.RangUtil;
 	import util.SkillAttack;
+	import util.ToolUtil;
 
 	public class ElementManager
 	{
@@ -430,6 +431,7 @@ package com.manager
 			if(list.indexOf(id)!=-1)return true;
 			return false;			
 		}
+		private var unAttackHero:Vector.<Hero> = new Vector.<Hero>;
 		/**
 		 *	 
 		 * @param e
@@ -566,7 +568,11 @@ package com.manager
 							{
 								_attackRangHero.splice(inx,1);
 							}
-							this.showSelectAttack(this._selectedHero,_attackRangHero);
+							//处在攻击范围内，但不能攻击的兵
+							this.unAttackHero = RangUtil.getStopHero(this._selectedHero,_attackRangHero);
+							
+							this.showSelectAttack(this._selectedHero,_attackRangHero,unAttackHero);
+							this._attackRangHero = ToolUtil.getDiffHero(_attackRangHero,unAttackHero);
 						}
 					}
 					else
@@ -1187,11 +1193,18 @@ package com.manager
 				this._elementLayer.removeChild(tmc,true);
 		}
 		
-		public function showSelectAttack(hero:Hero,heros:Vector.<Hero>):void
+		public function showSelectAttack(hero:Hero,heros:Vector.<Hero>,unattck:Vector.<Hero>):void
 		{
 			for(var i:String in heros)
 			{
-				EffectManager.showAttackEffects(hero,heros[i]);
+				if(unattck.indexOf(heros[i])!=-1)
+				{
+					//TODO处理现实不能攻击标示
+				}
+				else
+				{
+					EffectManager.showAttackEffects(hero,heros[i]);
+				}
 			}
 		}
 		
