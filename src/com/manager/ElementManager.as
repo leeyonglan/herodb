@@ -928,7 +928,6 @@ package com.manager
 					h.y = spaceDict[i].pos.y;
 					spaceDict[i].content = h;
 					this._elementLayer.addChild(h);
-//					SoundManager.getInstance().playEffectSound("transmission");
 				}
 			}
 		}
@@ -951,7 +950,6 @@ package com.manager
 					h.visible = false;
 					spaceDict[i+3].content = h;
 					this._elementLayer.addChild(h);
-//					SoundManager.getInstance().playEffectSound("transmission");
 				}
 			}
 		}
@@ -969,6 +967,7 @@ package com.manager
 					this._elementLayer.addChild(mc);
 					Starling.juggler.add(mc);
 					mc.play();
+					SoundManager.getInstance().playEffectSound("transmission");
 					break;
 				}
 			}
@@ -1181,10 +1180,23 @@ package com.manager
 			mc.pivotY = mc.height>>1;
 			mc.x = hero.x;
 			mc.y = hero.y;
+			mc.name = "attackEffect";
 			mc.fps = 24*hero.timeScale;
 			mc.addEventListener(Event.COMPLETE,effectComplete);
 			this._elementLayer.addChild(mc);
 			Starling.juggler.add(mc);
+		}
+		private function effectFpsNormal():void
+		{
+			var len:int = this._elementLayer.numChildren;
+			for( var i:int=0;i<len;i++)
+			{
+				var dis:DisplayObject = this._elementLayer.getChildAt(0)
+					if(dis is MovieClip && dis.name == "attackEffect")
+					{
+						(dis as MovieClip).fps = 24;
+					}
+			}
 		}
 		private function effectComplete(e:Event):void
 		{
@@ -1271,6 +1283,7 @@ package com.manager
 				{
 					h.status = Global.HERO_STATUS_DEAD;
 				}
+				if(h.isEnergy) return;
 				this._elementLayer.removeChild(h);
 				h.clear();
 				h.removeFromParent(false);
@@ -1427,7 +1440,8 @@ package com.manager
 			for(var i:String in this.heroPool)
 			{
 				this.heroPool[i].normal();
-			}			
+			}
+			effectFpsNormal();
 		}
 	}
 }
