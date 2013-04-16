@@ -596,7 +596,14 @@ package com.manager
 			}
 			else
 			{
-				hero.switchStat(SkillAttack.getAttackFlag(hero,toHero));
+				if(hero.confid == "3_5" && SkillAttack.getAttackFlag(hero,toHero) == Hero.finalAttackDash)
+				{
+					SkillAttack.processChongfeng(hero,toHero)
+				}
+				else
+				{
+					hero.switchStat(SkillAttack.getAttackFlag(hero,toHero));
+				}
 			}
 			if(this.needDisDir(hero,toHero.__cell))
 			{
