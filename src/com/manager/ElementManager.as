@@ -589,22 +589,19 @@ package com.manager
 			hero.toHero = toHero;
 			hero.addEventListener(Global.HERO_ACTION,actionHandler);
 			
-			if(PropEffect.hasSuperKill(hero._equip))
+			if(!SkillAttack.processSepicalAttack(hero,toHero))
 			{
-				hero.switchStat(Hero.FINALATTACK);
-				EffectManager.processSuperSkillEffect(hero,toHero);
-			}
-			else
-			{
-				if(hero.confid == "3_5" && SkillAttack.getAttackFlag(hero,toHero) == Hero.finalAttackDash)
+				if(PropEffect.hasSuperKill(hero._equip))
 				{
-					SkillAttack.processChongfeng(hero,toHero)
+					hero.switchStat(Hero.FINALATTACK);
+					EffectManager.processSuperSkillEffect(hero,toHero);
 				}
 				else
 				{
 					hero.switchStat(SkillAttack.getAttackFlag(hero,toHero));
 				}
 			}
+			
 			if(this.needDisDir(hero,toHero.__cell))
 			{
 				hero.setDisDir();
