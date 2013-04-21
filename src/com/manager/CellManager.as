@@ -3,6 +3,8 @@ package com.manager
 	import com.gameElements.CellLayer;
 	import com.gameElements.Hero;
 	
+	import dragonBones.Bone;
+	
 	import event.HeroEventDispatcher;
 	
 	import flash.geom.Point;
@@ -119,11 +121,12 @@ package com.manager
 			}
 			if(h.co == -1)
 			{
-				x = x+Number(h.xpos);
+				x = x+Number(h.xpos)/2;
 				y = y+Number(h.ypos);
 			}
 			return new Point(x,y);
 		}
+
 		public static function getPartPosOnHero(cell:Cell,hero:Hero):Point
 		{
 			TranslatePoint = new Point;

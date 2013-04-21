@@ -111,6 +111,7 @@ package com.manager
 			}
 			HeroEventDispatcher.getInstance().addListener(Global.CELL_TOUCH,cellTouchHandler);
 			HeroEventDispatcher.getInstance().addListener(Global.SHIPPING_SPACE_COMPLETE,shipSpaceComplete);
+			HeroEventDispatcher.getInstance().addListener(Global.ITEM_PROPSTUN,this.slowDownAll);
 		}
 		
 		private function stageTouchHandler(e:TouchEvent):void
@@ -314,7 +315,7 @@ package com.manager
 					this.switchSpaceStatus();
 					return;
 				}
-				this._selectedSpaceHero = null;
+				this.resetSpaceDis();
 			}
 			//TODO 判断道具是否可以用在格子上s
 			if(this._selectedItem)
@@ -405,17 +406,25 @@ package com.manager
 			checkDeadHeroOnCell(arg[0] as Hero,arg[1] as Cell);
 			this.addHero(arg[0],arg[1]);
 		}
-		private function getTouchedHero(t:Touch):Hero
+		private function getTouchedHero(t:Touch,selectHero:Hero):Hero
 		{
 			var h:Hero;
+			var c:Cell = CellManager.getInstance().getTouchedCell(t);
+			if(c == null) return h;
 			for(var i:String in heroPool)
 			{
-				t.getLocation(heroPool[i], HELPER_POINT);
-				if(heroPool[i].hitTest(HELPER_POINT,true))
+				if(heroPool[i].__cell == c)
 				{
-					h = heroPool[i];
+					h = heroPool[i]; 
 					break;
 				}
+//				t.getLocation(heroPool[i], HELPER_POINT);
+//				if(heroPool[i].hitTest(HELPER_POINT,true))
+//				{
+//					if(heroPool[i] == selectHero) continue;
+//					h = heroPool[i];
+//					break;
+//				}
 			}
 			return h;
 		}
@@ -443,7 +452,7 @@ package com.manager
 			if(touch == null) return;
 			if(touch.phase == TouchPhase.ENDED)
 			{
-				this._attackedHero = this.getTouchedHero(touch);
+				this._attackedHero = this.getTouchedHero(touch,this._selectedHero);
 				if(this._attackedHero == null)
 				{
 					var c:Cell = CellManager.getInstance().getTouchedCell(touch);
@@ -492,9 +501,11 @@ package com.manager
 						{
 							if(!(this._selectedHero.add_hp == "1" && this._attackedHero.isEnergy))
 							{
-								SkillAttack.addGainValue(this._selectedHero,this._attackedHero);
-								var master:String = UserManager.getInstance().isMaster?"1":"0";
-								DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
+								if(SkillAttack.addGainValue(this._selectedHero,this._attackedHero))
+								{
+									var master:String = UserManager.getInstance().isMaster?"1":"0";
+									DataManager.setdata(Global.SOURCETARGET_TYPE_HERO,this._selectedHero.id,Global.DATA_ACTION_ADDGAIN,master,{hid:this._attackedHero.id});
+								}
 							}
 						}
 						else
@@ -549,7 +560,7 @@ package com.manager
 								return;
 							}
 							this._selectedHero = item;
-							this._selectedSpaceHero = null;
+							this.resetSpaceDis();
 							(item as Hero).switchStat(Hero.ACTIVATE);
 							(item as Hero).selected = true;
 							//step rang
@@ -1192,14 +1203,10 @@ package com.manager
 		}
 		private function effectFpsNormal():void
 		{
-			var len:int = this._elementLayer.numChildren;
-			for( var i:int=0;i<len;i++)
+			var dis:MovieClip = this._elementLayer.getChildByName("attackEffect") as MovieClip;
+			if(dis)
 			{
-				var dis:DisplayObject = this._elementLayer.getChildAt(0)
-					if(dis is MovieClip && dis.name == "attackEffect")
-					{
-						(dis as MovieClip).fps = 24;
-					}
+				dis.fps = 24;
 			}
 		}
 		private function effectComplete(e:Event):void
@@ -1248,17 +1255,19 @@ package com.manager
 		 */
 		public function createHeroOnCell(cell:Cell,master:Boolean):void
 		{
-			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",master);
-			hero.hid = "4_7_1";
-			if(UserManager.getInstance().isMaster == master)
+			var hero:Hero = UserManager.getInstance().getHeroObj("4_7",master,function(e:Event):void
 			{
-				hero.isMe = true;
-			}
-			else
-			{
-				hero.isMe = false;
-			}
-			this.addSpicalHero(hero,cell);
+				hero.hid = "4_7_1";
+				if(UserManager.getInstance().isMaster == master)
+				{
+					hero.isMe = true;
+				}
+				else
+				{
+					hero.isMe = false;
+				}
+				ElementManager.getInstance().addSpicalHero(hero,cell);				
+			});
 		}
 		/**
 		 *只是清除 
@@ -1430,9 +1439,20 @@ package com.manager
 		 */
 		public function ableAll():void
 		{
+			for(var i:String in this.heroPool)
+			{
+				(this.heroPool[i] as Hero).addEventListener(TouchEvent.TOUCH,touchHandler);
+			}
+			for(var j:int=0;j<6;j++)
+			{
+				if(spaceDict[j].content != null && !(spaceDict[j].content as Sprite).hasEventListener(TouchEvent.TOUCH))
+				{
+					spaceDict[j].content.addEventListener(TouchEvent.TOUCH,touchAction);
+				}
+			}
 			GameManager.getInstance().getHud().bottomSprite.able();
 		}
-		public function slowDownAll():void
+		public function slowDownAll(e:Event = null):void
 		{
 			for(var i:String in this.heroPool)
 			{
